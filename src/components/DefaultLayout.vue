@@ -98,8 +98,8 @@
               class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
             >
               <span class="sr-only">Open main menu</span>
-              <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
-              <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
+              <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
+              <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
             </DisclosureButton>
           </div>
         </div>
@@ -176,8 +176,9 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/vue";
-import { useStore } from "vuex";
+
 import { computed } from "vue";
+import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import Notification from "./Notification.vue";
 

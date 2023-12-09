@@ -1,5 +1,6 @@
 import { createStore } from "vuex";
 import axiosClient from "../axios";
+import createPersistedState from "vuex-persistedstate";
 
 const store = createStore({
   state: {
@@ -25,11 +26,14 @@ const store = createStore({
       show: false,
       type: 'success',
       message: ''
-    }
+    },
+    endTime: null,
+    timerId: null,
+    timeLeft: null,
+    now: Date.now(),
   },
   getters: {},
   actions: {
-
     register({commit}, user) {
       return axiosClient.post('/register', user)
         .then(({data}) => {
@@ -97,13 +101,26 @@ const store = createStore({
           throw err;
         });
     },
-    getSurveyBySlug({ commit }, slug) {
+    getSurveyBySlug({ commit, state }, slug) {
       commit("setCurrentSurveyLoading", true);
       return axiosClient
         .get(`/survey-by-slug/${slug}`)
         .then((res) => {
           commit("setCurrentSurvey", res.data);
+          if (state.endTime === null) {
+            let timeLimit = Number(res.data.data.time_limit);
+            let endTime = Date.now() + timeLimit * 1000;
+            commit("setEndTime", endTime);
+          }
           commit("setCurrentSurveyLoading", false);
+          if (state.timerId !== null) {
+            clearInterval(state.timerId);
+          }
+          let timerId = setInterval(() => {
+            commit("setNow");
+            commit("decrementTimeLeft");
+          }, 1000);
+          commit("setTimerId", timerId);
           return res;
         })
         .catch((err) => {
@@ -111,7 +128,7 @@ const store = createStore({
           throw err;
         });
     },
-    saveSurvey({ commit, dispatch }, survey) {
+    saveSurvey({ commit }, survey) {
 
       delete survey.image_url;
 
@@ -138,7 +155,7 @@ const store = createStore({
         return res;
       });
     },
-    saveSurveyAnswer({commit}, {surveyId, answers}) {
+    saveSurveyAnswer({}, {surveyId, answers}) {
       return axiosClient.post(`/survey/${surveyId}/answer`, {answers});
     },
   },
@@ -147,8 +164,8 @@ const store = createStore({
       state.user.token = null;
       state.user.data = {};
       sessionStorage.removeItem("TOKEN");
+      window.localStorage.removeItem("vuex");
     },
-
     setUser: (state, user) => {
       state.user.data = user;
     },
@@ -183,7 +200,34 @@ const store = createStore({
         state.notification.show = false;
       }, 3000)
     },
+    setNow(state) {
+      state.now = Date.now();
+    },
+    setTimeLeft(state, time) {
+      state.timeLeft = time;
+    },
+    setEndTime(state, endTime) {
+      state.endTime = endTime;
+    },
+    setTimerId(state, id) {
+      state.timerId = id;
+    },
+    decrementTimeLeft(state) {
+      let timeLeft = Math.floor((state.endTime - state.now) / 1000);
+      if (timeLeft > 0) {
+        state.timeLeft = timeLeft;
+      } else {
+        clearInterval(state.timerId);
+        state.timerId = null;
+        state.timeLeft = 0;
+      }
+    },
   },
+  plugins: [
+    createPersistedState({
+      paths: ['endTime', 'timerId', 'timeLeft']
+    }),
+  ],
   modules: {},
 });
 

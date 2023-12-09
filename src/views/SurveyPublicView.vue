@@ -4,6 +4,7 @@
     <form @submit.prevent="submitSurvey" v-else class="container mx-auto">
       <div class="grid grid-cols-6 items-center">
         <div class="mr-4">
+          <p>Time left: {{ timeLeft  }} seconds</p>
           <img :src="survey.image_url" alt="" />
         </div>
         <div class="col-span-5">
@@ -40,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import QuestionViewer from "../components/viewer/QuestionViewer.vue";
@@ -55,6 +56,15 @@ const surveyFinished = ref(false);
 const answers = ref({});
 
 store.dispatch("getSurveyBySlug", route.params.slug);
+
+const timeLeft = computed(() => {
+  let timeLeft = Math.floor((store.state.endTime - store.state.now) / 1000);
+  return timeLeft > 0 ? timeLeft : 0;
+});
+
+onBeforeUnmount(() => {
+  clearInterval(store.state.timerId);
+});
 
 function submitSurvey() {
   console.log(JSON.stringify(answers.value, undefined, 2));
