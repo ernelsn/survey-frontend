@@ -2,6 +2,10 @@ import { createStore } from "vuex";
 import axiosClient from "../axios";
 import createPersistedState from "vuex-persistedstate";
 
+// import SecureLS from 'secure-ls';
+
+// let ls = new SecureLS({ isCompression: true });
+
 const store = createStore({
   state: {
     user: {
@@ -101,21 +105,23 @@ const store = createStore({
           throw err;
         });
     },
-    getSurveyBySlug({ commit, state }, slug) {
+    getSurveyBySlug({ dispatch, commit }, slug) {
+      dispatch("resetTimer");
       commit("setCurrentSurveyLoading", true);
       return axiosClient
         .get(`/survey-by-slug/${slug}`)
         .then((res) => {
           commit("setCurrentSurvey", res.data);
-          if (state.endTime === null) {
-            let timeLimit = Number(res.data.data.time_limit);
-            let endTime = Date.now() + timeLimit * 1000;
-            commit("setEndTime", endTime);
+          let startTimeKey = 'startTime-' + slug;
+          let startTime = localStorage.getItem(startTimeKey);
+          if (startTime === null) {
+            startTime = Date.now();
+            localStorage.setItem(startTimeKey, startTime);
           }
+          let timeLimit = Number(res.data.data.time_limit);
+          let endTime = Number(startTime) + timeLimit * 1000;
+          commit("setEndTime", endTime);
           commit("setCurrentSurveyLoading", false);
-          if (state.timerId !== null) {
-            clearInterval(state.timerId);
-          }
           let timerId = setInterval(() => {
             commit("setNow");
             commit("decrementTimeLeft");
@@ -127,11 +133,17 @@ const store = createStore({
           commit("setCurrentSurveyLoading", false);
           throw err;
         });
+    },            
+    resetTimer({ commit, state }) {
+      if (state.timerId !== null) {
+        clearInterval(state.timerId);
+      }
+      commit("setTimerId", null);
+      commit("setEndTime", null);
+      commit("setTimeLeft", null);
     },
     saveSurvey({ commit }, survey) {
-
       delete survey.image_url;
-
       let response;
       if (survey.id) {
         response = axiosClient
@@ -164,7 +176,12 @@ const store = createStore({
       state.user.token = null;
       state.user.data = {};
       sessionStorage.removeItem("TOKEN");
-      window.localStorage.removeItem("vuex");
+      localStorage.removeItem("vuex");
+      for (let key in localStorage) {
+        if (key.startsWith('startTime-')) {
+          localStorage.removeItem(key);
+        }
+      }
     },
     setUser: (state, user) => {
       state.user.data = user;
@@ -225,7 +242,12 @@ const store = createStore({
   },
   plugins: [
     createPersistedState({
-      paths: ['endTime', 'timerId', 'timeLeft']
+      paths: ['endTime', 'timerId', 'timeLeft'],
+      // storage: {
+      //   getItem: (key) => ls.get(key),
+      //   setItem: (key, value) => ls.set(key, value),
+      //   removeItem: (key) => ls.remove(key),
+      // },
     }),
   ],
   modules: {},
