@@ -269,7 +269,7 @@
 <script setup>
 import { v4 as uuidv4 } from "uuid";
 import { computed, ref } from "@vue/reactivity";
-import store from "../../store";
+// import store from "../../store";
 
 const props = defineProps({
   question: Object,

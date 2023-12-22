@@ -43,10 +43,10 @@
 <script setup>
 import { computed, ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-import { useStore } from "vuex";
+// import { useStore } from "vuex";
 import QuestionViewer from "../components/viewer/QuestionViewer.vue";
 const route = useRoute();
-const store = useStore();
+// const store = useStore();
 
 const loading = computed(() => store.state.currentSurvey.loading);
 const survey = computed(() => store.state.currentSurvey.data);

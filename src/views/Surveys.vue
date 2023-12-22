@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import store from "../store";
+// import store from "../store";
 import { computed } from "vue";
 import PageComponent from "../components/PageComponent.vue";
 import SurveyListItem from "../components/SurveyListItem.vue";
