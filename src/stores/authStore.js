@@ -3,9 +3,10 @@ import axiosClient from "../axios";
 
 const handleErrors = (error) => {
   if (error.response.status === 422) {
-    return error.response.data.errors;
+    return error.response.data.errors || ["An error occurred while processing the request."];
   }
-  return [];
+  
+  return ["An error occurred while processing the request."];
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -24,28 +25,26 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async getToken() {
-      await axiosClient.get("/sanctum/csrf-cookie");
+      await axiosClient.get(`/sanctum/csrf-cookie`);
     },
     async fetchUser() {
       await this.getToken();
-      const data = await axiosClient.get("/api/user");
+      const data = await axiosClient.get(`/api/user`);
       this.authUser = data.data;
     },
     async register(user) {
       this.authErrors = [];
       this.loading = true;
-      await this.getToken();
 
       try {
-        await axiosClient.post('/register', {
+        await this.getToken();
+        await axiosClient.post(`/register`, {
           name: user.name,
           email: user.email,
           password: user.password,
           password_confirmation: user.password_confirmation
         });
-        this.router.push({
-          name: "Login",
-        });
+        this.router.push({ name: "Login" });
       } catch (error) {
         this.authErrors = handleErrors(error);
         this.loading = false;
@@ -54,23 +53,22 @@ export const useAuthStore = defineStore('auth', {
     async login(user) {
       this.authErrors = [];
       this.loading = true;
-      await this.getToken();
 
       try {
-        await axiosClient.post('/login', {
+        await this.getToken();
+        await axiosClient.post(`/login`, {
           email: user.email,
           password: user.password
         });
-        this.router.push({
-          name: "Dashboard",
-        });
+        this.loading = false;
+        this.router.push({ name: "Dashboard" });
       } catch (error) {
         this.authErrors = handleErrors(error);
         this.loading = false;
       }
     },
     async logout() {
-      await axiosClient.post('/logout');
+      await axiosClient.post(`/logout`);
       this.handleLogout();
     },
     async handleLogout() {
@@ -88,30 +86,28 @@ export const useAuthStore = defineStore('auth', {
       await this.getToken();
 
       try {
-        const response = await axiosClient.post("/forgot-password", {
+        const response = await axiosClient.post(`/forgot-password`, {
           email: user.email,
         });
         this.authStatus = response.data.status;
       } catch (error) {
-        if (error.response.status === 422) {
-          return error.response.data.errors;
-        }
+        this.authErrors = handleErrors(error);
       }
     },
-    async passwordReset(userData) {
+    async passwordReset(user) {
       this.authErrors = [];
       await this.getToken();
 
       try {
-        const response = await axiosClient.post("/reset-password", userData);
+        const response = await axiosClient.post(`/reset-password`, user);
         this.authStatus = response.data.status;
 
-        this.router.push({
-          name: "Dashboard",
-        });
+        this.router.push({ name: "Dashboard" });
       } catch (error) {
         this.authErrors = handleErrors(error);
       }
     }
   },
 });
+
+

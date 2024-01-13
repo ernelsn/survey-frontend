@@ -92,7 +92,7 @@ router.beforeEach((to, from, next) => {
     }).catch(error => {
       next({
         path: '/login',
-        query: { redirect: to.fullPath }
+        // query: { redirect: to.fullPath }
       });
     });
   } else {

@@ -162,7 +162,7 @@
 
     <router-view :key="$route.path"></router-view>
 
-    <!-- <Notification /> -->
+    <Notification />
   </div>
 </template>
 
@@ -181,7 +181,7 @@ import { computed } from "vue";
 
 import { useRouter } from "vue-router";
 import { useAuthStore } from '../stores/authStore';
-// import Notification from "./Notification.vue";
+import Notification from "./Notification.vue";
 
 const navigation = [
   { name: "Dashboard", to: { name: "Dashboard" } },

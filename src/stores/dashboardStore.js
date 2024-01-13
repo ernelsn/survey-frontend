@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
 import axiosClient from "../axios";
 
-export const useDashboardStore = defineStore({
-  id: 'dashboard',
+export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
     loading: false,
     data: {},
@@ -14,22 +13,16 @@ export const useDashboardStore = defineStore({
   }),
   actions: {
     async getDashboardData() {
-      this.setLoading(true);
+      this.loading = true;
       try {
-        const res = await axiosClient.get(`/dashboard`);
-        this.setLoading(false);
-        this.setData(res.data);
+        const res = await axiosClient.get(`/api/dashboard`);
+        this.loading = false;
+        this.data = res.data;
         return res;
       } catch (error) {
-        this.setLoading(false);
+        this.loading = false;
         return error;
       }
-    },
-    setLoading(loading) {
-      this.loading = loading;
-    },
-    setData(data) {
-      this.data = data;
     },
     notify({message, type}) {
       this.notification.show = true;
@@ -41,3 +34,4 @@ export const useDashboardStore = defineStore({
     },
   },
 });
+

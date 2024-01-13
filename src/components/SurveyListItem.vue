@@ -85,5 +85,3 @@ const { survey } = defineProps({
 });
 const emit = defineEmits(["delete", "edit"]);
 </script>
-
-<style></style>

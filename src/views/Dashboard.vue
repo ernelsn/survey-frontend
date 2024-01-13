@@ -144,14 +144,12 @@
 <script setup>
 import PageComponent from "../components/PageComponent.vue";
 import { computed } from "vue";
-// import { useStore } from "vuex";
+import { useDashboardStore } from '../stores/dashboardStore';
 
-// const store = useStore();
+const dashboardStore = useDashboardStore();
 
-const loading = computed(() => store.state.dashboard.loading);
-const data = computed(() => store.state.dashboard.data);
+const loading = computed(() => dashboardStore.loading);
+const data = computed(() => dashboardStore.data);
 
-store.dispatch("getDashboardData");
+dashboardStore.getDashboardData();
 </script>
-
-<style scoped></style>

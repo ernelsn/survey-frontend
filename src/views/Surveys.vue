@@ -72,24 +72,25 @@
 </template>
 
 <script setup>
-// import store from "../store";
 import { computed } from "vue";
 import PageComponent from "../components/PageComponent.vue";
 import SurveyListItem from "../components/SurveyListItem.vue";
+import { useSurveyStore } from "../stores/surveyStore";
 
-const surveys = computed(() => store.state.surveys);
+const surveyStore = useSurveyStore();
 
-store.dispatch("getSurveys");
+const surveys = computed(() => surveyStore.surveys);
 
-function deleteSurvey(survey) {
+surveyStore.getSurveys();
+
+async function deleteSurvey(survey) {
   if (
     confirm(
       `Are you sure you want to delete this survey? Operation can't be undone!!`
     )
   ) {
-    store.dispatch("deleteSurvey", survey.id).then(() => {
-      store.dispatch("getSurveys");
-    });
+    await surveyStore.deleteSurvey(survey.id);
+    await surveyStore.getSurveys();
   }
 }
 
@@ -99,6 +100,7 @@ function getForPage(ev, link) {
     return;
   }
 
-  store.dispatch("getSurveys", { url: link.url });
+  surveyStore.getSurveys({ url: link.url });
 }
 </script>
+

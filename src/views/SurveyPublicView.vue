@@ -43,33 +43,32 @@
 <script setup>
 import { computed, ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-// import { useStore } from "vuex";
+import { useSurveyStore } from "../stores/surveyStore";
 import QuestionViewer from "../components/viewer/QuestionViewer.vue";
 const route = useRoute();
-// const store = useStore();
+const surveyStore = useSurveyStore();
 
-const loading = computed(() => store.state.currentSurvey.loading);
-const survey = computed(() => store.state.currentSurvey.data);
+const loading = computed(() => surveyStore.currentSurvey.loading);
+const survey = computed(() => surveyStore.currentSurvey.data);
 
 const surveyFinished = ref(false);
 
 const answers = ref({});
 
-store.dispatch("getSurveyBySlug", route.params.slug);
+surveyStore.getSurveyBySlug(route.params.slug);
 
 const timeLeft = computed(() => {
-  let timeLeft = Math.floor((store.state.endTime - store.state.now) / 1000);
+  let timeLeft = Math.floor((surveyStore.endTime - surveyStore.now) / 1000);
   return timeLeft > 0 ? timeLeft : 0;
 });
 
 onBeforeUnmount(() => {
-  clearInterval(store.state.timerId);
+  clearInterval(surveyStore.timerId.value);
 });
 
 function submitSurvey() {
-  console.log(JSON.stringify(answers.value, undefined, 2));
-  store
-    .dispatch("saveSurveyAnswer", {
+  surveyStore
+    .storeSurveyAnswer({
       surveyId: survey.value.id,
       answers: answers.value,
     })
@@ -85,5 +84,3 @@ function submitAnotherResponse() {
   surveyFinished.value = false;
 }
 </script>
-
-<style></style>

@@ -250,16 +250,18 @@
 import { v4 as uuidv4 } from "uuid";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-// import store from "../store";
+import { useSurveyStore } from "../stores/surveyStore";
+import { useDashboardStore } from '../stores/dashboardStore';
 import PageComponent from "../components/PageComponent.vue";
 import QuestionEditor from "../components/editor/QuestionEditor.vue";
 
 const router = useRouter();
-
 const route = useRoute();
+const surveyStore = useSurveyStore();
+const dashboardStore = useDashboardStore();
 
 // Get survey loading state, which only changes when we fetch survey from backend
-const surveyLoading = computed(() => store.state.currentSurvey.loading);
+const surveyLoading = computed(() => surveyStore.currentSurvey.loading);
 
 // Create empty survey
 let model = ref({
@@ -276,10 +278,10 @@ let model = ref({
 
 // Watch to current survey data change and when this happens we update local model
 watch(
-  () => store.state.currentSurvey.data,
+  () => surveyStore.currentSurvey.data,
   (newVal, oldVal) => {
     model.value = {
-      ...JSON.parse(JSON.stringify(newVal)),
+      ...newVal,
       status: !!newVal.status,
     };
   }
@@ -287,7 +289,7 @@ watch(
 
 // If the current component is rendered on survey update route we make a request to fetch survey
 if (route.params.id) {
-  store.dispatch("getSurvey", route.params.id);
+  surveyStore.fetchSurvey(route.params.id);
 }
 
 function onImageChoose(ev) {
@@ -295,14 +297,15 @@ function onImageChoose(ev) {
 
   const reader = new FileReader();
   reader.onload = () => {
-    // The field to send on backend and apply validations
-    model.value.image = reader.result;
-
-    // The field to display here
-    model.value.image_url = reader.result;
+    setImage(reader.result);
     ev.target.value = "";
   };
   reader.readAsDataURL(file);
+}
+
+function setImage(image) {
+  model.value.image = image;
+  model.value.image_url = image;
 }
 
 function addQuestion(index) {
@@ -329,7 +332,7 @@ function questionChange(question) {
   }
   model.value.questions = model.value.questions.map((q) => {
     if (q.id === question.id) {
-      return JSON.parse(JSON.stringify(question));
+      return {...question};
     }
     return q;
   });
@@ -338,20 +341,19 @@ function questionChange(question) {
 /**
  * Create or update survey
  */
-function saveSurvey() {
+async function saveSurvey() {
   let action = "created";
   if (model.value.id) {
     action = "updated";
   }
-  store.dispatch("saveSurvey", { ...model.value }).then(({ data }) => {
-    store.commit("notify", {
-      type: "success",
-      message: "The survey was successfully " + action,
-    });
-    router.push({
-      name: "SurveyView",
-      params: { id: data.data.id },
-    });
+  const { data } = await surveyStore.storeSurvey({ ...model.value });
+  dashboardStore.notify({
+    type: "success",
+    message: `The survey was successfully ${action}`,
+  });
+  router.push({
+    name: "SurveyView",
+    params: { id: data.data.id },
   });
 }
 
@@ -361,7 +363,7 @@ function deleteSurvey() {
       `Are you sure you want to delete this survey? Operation can't be undone!!`
     )
   ) {
-    store.dispatch("deleteSurvey", model.value.id).then(() => {
+    surveyStore.deleteSurvey(model.value.id).then(() => {
       router.push({
         name: "Surveys",
       });
@@ -369,5 +371,3 @@ function deleteSurvey() {
   }
 }
 </script>
-
-<style></style>
