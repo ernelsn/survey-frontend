@@ -24,7 +24,7 @@ export const useSurveyStore = defineStore('survey', {
   }),
 
   actions: {
-    async getSurveys(url = '/api/survey') {
+    async getSurveys(url = `/api/v1/survey`) {
       this.surveys.loading = true;
       try {
         const res = await surveyService.getSurveys(url);

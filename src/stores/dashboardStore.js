@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import axiosClient from "../axios";
+import axiosClient from '../axios';
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
@@ -15,7 +15,7 @@ export const useDashboardStore = defineStore('dashboard', {
     async getDashboardData() {
       this.loading = true;
       try {
-        const res = await axiosClient.get(`/api/dashboard`);
+        const res = await axiosClient.get(`/api/v1/dashboard`);
         this.loading = false;
         this.data = res.data;
         return res;
