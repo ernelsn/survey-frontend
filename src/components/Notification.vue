@@ -10,11 +10,8 @@
 
 <script setup>
 import { computed } from "vue";
-import { useStore } from "vuex";
+import { useDashboardStore } from '../stores/dashboardStore';
 
-const store = useStore();
-
-const notification = computed(() => store.state.notification);
+const dashboard = useDashboardStore();
+const notification = computed(() => dashboard.notification);
 </script>
-
-<style></style>

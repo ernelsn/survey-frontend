@@ -1,14 +1,21 @@
 import { createRouter, createWebHistory } from "vue-router";
+
+import DefaultLayout from "../components/DefaultLayout.vue";
+import AuthLayout from "../components/AuthLayout.vue";
+
+import Login from "../views/Login.vue";
+import Register from "../views/Register.vue";
+import ForgotPassword from "../views/ForgotPassword.vue";
+import PasswordReset from "../views/PasswordReset.vue";
+
 import Dashboard from "../views/Dashboard.vue";
 import Surveys from "../views/Surveys.vue";
 import SurveyView from "../views/SurveyView.vue";
-import Login from "../views/Login.vue";
-import Register from "../views/Register.vue";
-import NotFound from "../views/NotFound.vue";
 import SurveyPublicView from "../views/SurveyPublicView.vue";
-import DefaultLayout from "../components/DefaultLayout.vue";
-import AuthLayout from "../components/AuthLayout.vue";
-import store from "../store";
+
+import NotFound from "../views/NotFound.vue";
+
+import { useAuthStore } from '../stores/authStore';
 
 const routes = [
   {
@@ -48,7 +55,17 @@ const routes = [
     ],
   },
   {
-    path: '/404',
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPassword
+  },
+  {
+    path: "/password-reset/:token",
+    name: "PasswordReset",
+    component: PasswordReset,
+  },
+  { 
+    path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound
   }
@@ -60,13 +77,28 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth && !store.state.user.token) {
-    next({ name: "Login" });
-  } else if (store.state.user.token && to.meta.isGuest) {
-    next({ name: "Dashboard" });
+  const authStore = useAuthStore();
+
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    authStore.fetchUser().then(() => {
+      if (authStore.user) {
+        next();
+      } else {
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath }
+        });
+      }
+    }).catch(error => {
+      next({
+        path: '/login',
+        // query: { redirect: to.fullPath }
+      });
+    });
   } else {
     next();
   }
 });
+
 
 export default router;

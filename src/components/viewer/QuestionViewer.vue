@@ -98,7 +98,7 @@ if (question.type === "checkbox") {
   model = ref({});
 }
 
-function shouldHaveOptions() {
+function hasOptions() {
   return ["select", "radio", "checkbox"].includes(question.type);
 }
 
@@ -112,5 +112,3 @@ function onCheckboxChange($event) {
   emits("update:modelValue", selectedOptions);
 }
 </script>
-
-<style></style>

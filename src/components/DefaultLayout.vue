@@ -178,8 +178,9 @@ import {
 } from "@headlessui/vue";
 
 import { computed } from "vue";
-import { useStore } from "vuex";
+
 import { useRouter } from "vue-router";
+import { useAuthStore } from '../stores/authStore';
 import Notification from "./Notification.vue";
 
 const navigation = [
@@ -199,21 +200,22 @@ export default {
     Notification,
   },
   setup() {
-    const store = useStore();
+    const authenticate = useAuthStore();
     const router = useRouter();
 
     function logout() {
-      store.dispatch("logout").then(() => {
+      authenticate.logout()
+      .then(() => {
         router.push({
           name: "Login",
         });
       });
     }
 
-    store.dispatch("getUser");
+    authenticate.fetchUser();
 
     return {
-      user: computed(() => store.state.user.data),
+      user: computed(() => authenticate.user),
       navigation,
       logout,
     };

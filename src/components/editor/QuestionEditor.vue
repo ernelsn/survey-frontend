@@ -268,8 +268,10 @@
 
 <script setup>
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref } from "@vue/reactivity";
-import store from "../../store";
+import { computed, ref } from "vue";
+import { useSurveyStore } from "../../stores/surveyStore";
+
+const surveyStore = useSurveyStore();
 
 const props = defineProps({
   question: Object,
@@ -281,8 +283,8 @@ const emit = defineEmits(["change", "addQuestion", "deleteQuestion"]);
 // Re-create the whole question data to avoid unintentional reference change
 const model = ref(JSON.parse(JSON.stringify(props.question)));
 
-// Get question types from vuex
-const questionTypes = computed(() => store.state.questionTypes);
+// Get question types from pinia store
+const questionTypes = computed(() => surveyStore.questionTypes);
 
 function upperCaseFirst(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -297,7 +299,7 @@ function setOptions(options) {
 }
 
 // Check if the question should have options
-function shouldHaveOptions() {
+function hasOptions() {
   return ["select", "radio", "checkbox"].includes(model.value.type);
 }
 
@@ -317,7 +319,7 @@ function removeOption(op) {
 }
 
 function typeChange() {
-  if (shouldHaveOptions()) {
+  if (hasOptions()) {
     setOptions(getOptions() || []);
   }
   dataChange();
@@ -326,7 +328,7 @@ function typeChange() {
 // Emit the data change
 function dataChange() {
   const data = model.value;
-  if (!shouldHaveOptions()) {
+  if (!hasOptions()) {
     delete data.data.options;
   }
 
@@ -341,5 +343,3 @@ function deleteQuestion() {
   emit("deleteQuestion", props.question);
 }
 </script>
-
-<style></style>
