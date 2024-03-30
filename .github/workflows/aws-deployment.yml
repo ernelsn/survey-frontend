@@ -40,4 +40,4 @@ jobs:
         REMOTE_USER: ${{ secrets.USERNAME }}
         TARGET: ${{ secrets.TARGET_DIR }}
         SCRIPT_BEFORE: "sudo apt-get -y update && chmod +x /home/scripts/post_deploy.sh"
-        SCRIPT_AFTER: ${{ secrets.POST_DEPLOY }}
+        SCRIPT_AFTER: "cd /home/scripts/ && ./post_deploy.sh"
