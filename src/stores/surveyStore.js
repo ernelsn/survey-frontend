@@ -16,7 +16,7 @@ export const useSurveyStore = defineStore('survey', {
       data: {},
       loading: false,
     },
-    questionTypes: ["text", "select", "radio", "checkbox", "textarea"],
+    questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "linear scale"],
     endTime: null,
     timerId: null,
     timeLeft: null,
