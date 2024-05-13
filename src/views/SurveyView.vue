@@ -118,7 +118,7 @@
             Questions
 
             <!-- Add new question -->
-            <button type="button" @click="addQuestion()"
+            <button type="button" @click="addQuestion(model.questions.length)"
               class="flex items-center text-sm py-1 px-4 rounded-sm text-white bg-gray-600 hover:bg-gray-700">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
