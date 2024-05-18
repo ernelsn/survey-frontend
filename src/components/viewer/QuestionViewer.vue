@@ -65,7 +65,7 @@ if (question.type === "checkbox") {
 }
 
 function hasOptions() {
-  return ["range", "radio", "checkbox"].includes(question.type);
+  return ["multiple choice", "checkbox"].includes(question.type);
 }
 
 function onCheckboxChange($event) {
