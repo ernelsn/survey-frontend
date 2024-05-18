@@ -16,7 +16,7 @@ export const useSurveyStore = defineStore('survey', {
       data: {},
       loading: false,
     },
-    questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "linear scale"],
+    questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
     endTime: null,
     timerId: null,
     timeLeft: null,
@@ -24,7 +24,7 @@ export const useSurveyStore = defineStore('survey', {
   }),
 
   actions: {
-    async getSurveys(url = `/api/v1/survey`) {
+    async getSurveys(url = '/api/v1/survey') {
       this.surveys.loading = true;
       try {
         const res = await surveyService.getSurveys(url);

@@ -131,7 +131,7 @@ function upperCaseFirst(str) {
 }
 
 function hasOptions() {
-  return ["multiple choice", "checkbox"].includes(model.value.type);
+  return ["multiple choice", "checkbox", "dropdown"].includes(model.value.type);
 }
 
 function manageOptions(action, option) {
