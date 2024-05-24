@@ -1,7 +1,18 @@
 <template>
   <div class="py-5 px-8">
-    <div v-if="loading" class="flex justify-center">Loading...</div>
-    <form @submit.prevent="submitSurvey" v-else class="container mx-auto">
+    <div v-if="loading" class="flex justify-center">
+      <span class="loading loading-dots loading-lg mr-1"></span>
+    </div>
+
+    <div v-else-if="surveyFinished" class="py-8 px-6 bg-emerald-400 text-white w-[600px] mx-auto">
+      <div class="text-xl mb-3 font-semibold ">Thank you for participating in this survey.</div>
+      <button @click="submitAnotherResponse" type="button"
+        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Submit another response
+      </button>
+    </div>
+
+    <form v-else @submit.prevent="submitSurvey" class="container mx-auto">
       <div class="grid items-center">
         <div class="hero min-h-screen">
           <div class="hero-content flex-col lg:flex-row-reverse">
@@ -47,15 +58,6 @@
           Submit
         </button>
       </div>
-
-      <div v-if="surveyFinished" class="py-8 px-6 bg-emerald-400 text-white w-[600px] mx-auto">
-        <div class="text-xl mb-3 font-semibold ">Thank you for participating in this survey.</div>
-        <button @click="submitAnotherResponse" type="button"
-          class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Submit another response
-        </button>
-      </div>
-
     </form>
   </div>
 </template>

@@ -5,17 +5,18 @@
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg" alt="Workflow" />
+              <img class="h-8 w-8" src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
+                alt="Your Company">
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
                 <router-link v-for="item in navigation" :key="item.name" :to="item.to"
                   active-class="bg-gray-900 text-white" :class="[
-      this.$route.name === item.to.name
-        ? ''
-        : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-      'px-3 py-2 rounded-md text-sm font-medium',
-    ]">{{ item.name }}
+                    this.$route.name === item.to.name
+                      ? ''
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                    'px-3 py-2 rounded-md text-sm font-medium',
+                  ]">{{ item.name }}
                 </router-link>
               </div>
             </div>
@@ -50,10 +51,10 @@
                   leave-to-class="transform opacity-0 scale-95">
                   <MenuItems
                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <MenuItem v-slot="{ }">
+                    <MenuItem v-slot="{}">
                     <a @click="logout" :class="[
-      'block px-4 py-2 text-sm text-gray-700 cursor-pointer',
-    ]">Sign out</a>
+                      'block px-4 py-2 text-sm text-gray-700 cursor-pointer',
+                    ]">Sign out</a>
                     </MenuItem>
                   </MenuItems>
                 </transition>
@@ -62,8 +63,8 @@
           </div>
           <div class="-mr-2 flex md:hidden">
             <!-- Mobile menu button -->
-            <DisclosureButton
-              class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+            <DisclosureButton class="relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+              <span class="absolute -inset-0.5" />
               <span class="sr-only">Open main menu</span>
               <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
               <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
@@ -76,11 +77,11 @@
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <router-link v-for="item in navigation" :key="item.name" :to="item.to" active-class="bg-gray-900 text-white"
             :class="[
-      this.$route.name === item.to.name
-        ? ''
-        : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-      'block px-3 py-2 rounded-md text-base font-medium',
-    ]">{{ item.name }}
+              this.$route.name === item.to.name
+                ? ''
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+              'block px-3 py-2 rounded-md text-base font-medium',
+            ]">{{ item.name }}
           </router-link>
         </div>
         <div class="pt-4 pb-3 border-t border-gray-700">
@@ -117,15 +118,8 @@
 </template>
 
 <script>
-import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-} from "@headlessui/vue";
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue";
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 import { computed } from "vue";
 
@@ -135,6 +129,7 @@ import Notification from "./Notification.vue";
 
 const navigation = [
   { name: "Dashboard", to: { name: "Dashboard" } },
+  { name: "Learnings", to: { name: "Learnings" } },
   { name: "Surveys", to: { name: "Surveys" } },
 ];
 
@@ -147,6 +142,8 @@ export default {
     MenuButton,
     MenuItem,
     MenuItems,
+    Bars3Icon,
+    XMarkIcon,
     Notification,
   },
   setup() {

@@ -1,4 +1,3 @@
-<!-- This example requires Tailwind CSS v2.0+ -->
 <template>
   <PageComponent>
     <template v-slot:header>
@@ -14,7 +13,7 @@
         </router-link>
       </div>
     </template>
-    <div v-if="surveys.loading" class="flex justify-center">Loading...</div>
+    <div v-if="surveys.loading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
     <div v-else-if="surveys.data.length">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
         <SurveyListItem v-for="(survey, ind) in surveys.data" :key="survey.id" :survey="survey"

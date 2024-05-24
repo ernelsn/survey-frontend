@@ -29,12 +29,13 @@
         </div>
       </div>
     </template>
-    <div v-if="surveyLoading" class="flex justify-center">Loading...</div>
+
+    <div v-if="surveyLoading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
+
     <form v-else @submit.prevent="saveSurvey" class="animate-fade-in-down">
       <div class="shadow sm:rounded-md sm:overflow-hidden">
         <!-- Survey Fields -->
         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-          <!-- Image -->
           <div>
             <label class="block text-sm font-medium text-gray-700">
               Image
@@ -57,77 +58,58 @@
               </button>
             </div>
           </div>
-          <!--/ Image -->
 
-          <!-- Title -->
-          <div>
-            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-            <input type="text" name="title" id="title" v-model="model.title" autocomplete="survey_title"
-              class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-          </div>
-          <!--/ Title -->
-
-          <!-- Description -->
-          <div>
-            <label for="about" class="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <div class="mt-1">
-              <textarea id="description" name="description" rows="3" v-model="model.description"
-                autocomplete="survey_description"
-                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                placeholder="Describe your survey" />
+          <label class="form-control w-full">
+            <div class="label">
+              <span class="label-text font-medium text-gray-700">Title</span>
             </div>
-          </div>
-          <!-- Description -->
+            <input type="text" name="title" id="title" v-model="model.title" autocomplete="survey_title"
+              class="input input-bordered w-full" />
+          </label>
+
+          <label class="form-control">
+            <div class="label">
+              <span class="label-text font-medium text-gray-700">Description</span>
+            </div>
+            <textarea id="description" name="description" class="textarea textarea-bordered h-32" v-model="model.description" 
+              placeholder="The description about the survey"></textarea>
+          </label>
 
           <div class="grid gap-6 mb-6 md:grid-cols-2">
-            <!-- Expire Date -->
-            <div>
-              <label for="expire_date" class="block text-sm font-medium text-gray-700">Expire Date</label>
-              <input type="date" name="expire_date" id="expire_date" v-model="model.expire_date"
-                class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-            </div>
-            <!--/ Expire Date -->
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text font-medium text-gray-700">Expire Date</span>
+              </div>
+              <input type="date" name="expire_date" id="expire_date" v-model="model.expire_date" class="input input-bordered w-full" />
+            </label>
 
-            <!--/ Time Limit -->
-            <div>
-              <label for="time_limit" class="block text-sm font-medium text-gray-700">Time Limit</label>
-              <input type="text" name="time_limit" id="time_limit" v-model="model.time_limit"
-                class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
-            </div>
-            <!--/ Time Limit -->
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text font-medium text-gray-700">Time limit</span>
+              </div>
+              <input type="number" name="time_limit" id="time_limit" v-model="model.time_limit"
+                class="input input-bordered w-full" />
+            </label>
           </div>
 
-          <!-- Status -->
-          <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <input id="status" name="status" type="checkbox" v-model="model.status"
-                class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-            </div>
-            <div class="ml-3 text-sm">
-              <label for="status" class="font-medium text-gray-700">Active</label>
-            </div>
+          <div class="form-control flex items-start">
+            <label class="label cursor-pointer gap-x-4">
+              <input id="status" name="status" type="checkbox" v-model="model.status" class="checkbox" />
+              <span class="label-text font-medium text-gray-700">Publish</span> 
+            </label>
           </div>
-          <!--/ Status -->
         </div>
-        <!--/ Survey Fields -->
+        <!-- Survey Fields -->
 
         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
           <h3 class="text-2xl font-semibold flex items-center justify-between">
             Questions
-
-            <!-- Add new question -->
-            <button type="button" @click="addQuestion(model.questions.length)"
-              class="flex items-center text-sm py-1 px-4 rounded-sm text-white bg-gray-600 hover:bg-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                  clip-rule="evenodd" />
+            <button class="btn" type="button" @click="addQuestion(model.questions.length)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Add Question
+              Question
             </button>
-            <!--/ Add new question -->
           </h3>
           <div v-if="!model.questions.length" class="text-center text-gray-600">
             You don't have any questions created
@@ -179,7 +161,7 @@ let model = ref({
   questions: [],
 });
 
-// Watch to current survey data change and when this happens we update local model
+// Watch current survey data change and when this happens we update local model
 watch(
   () => surveyStore.currentSurvey.data,
   (newVal, oldVal) => {

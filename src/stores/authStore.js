@@ -45,6 +45,7 @@ export const useAuthStore = defineStore('auth', {
           password_confirmation: user.password_confirmation
         });
         this.router.push({ name: "Login" });
+        this.loading = false;
       } catch (error) {
         this.authErrors = handleErrors(error);
         this.loading = false;

@@ -1,21 +1,23 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import DefaultLayout from "../components/DefaultLayout.vue";
-import AuthLayout from "../components/AuthLayout.vue";
+const DefaultLayout = () => import("../components/DefaultLayout.vue");
 
-import Login from "../views/Login.vue";
-import Register from "../views/Register.vue";
-import ForgotPassword from "../views/ForgotPassword.vue";
-import PasswordReset from "../views/PasswordReset.vue";
+const Login = () => import("../views/Login.vue");
+const Register = () => import("../views/Register.vue");
+const ForgotPassword = () => import("../views/ForgotPassword.vue");
+const PasswordReset = () => import("../views/PasswordReset.vue");
 
-import Dashboard from "../views/Dashboard.vue";
-import Surveys from "../views/Surveys.vue";
-import SurveyView from "../views/SurveyView.vue";
-import SurveyPublicView from "../views/SurveyPublicView.vue";
+const Dashboard = () => import("../views/Dashboard.vue");
+const Surveys = () => import("../views/Surveys.vue");
+const SurveyView = () => import("../views/SurveyView.vue");
+const SurveyPublicView = () => import("../views/SurveyPublicView.vue");
 
-import NotFound from "../views/NotFound.vue";
+const Learnings = () => import("../views/Learnings.vue");
+
+const NotFound = () => import("../views/NotFound.vue");
 
 import { useAuthStore } from '../stores/authStore';
+import { useSurveyStore } from '../stores/surveyStore';
 
 const routes = [
   {
@@ -28,31 +30,40 @@ const routes = [
       { path: "/surveys", name: "Surveys", component: Surveys },
       { path: "/surveys/create", name: "SurveyCreate", component: SurveyView },
       { path: "/surveys/:id", name: "SurveyView", component: SurveyView },
+      { path: "/learnings", name: "Learnings", component: Learnings },
     ],
   },
   {
     path: "/view/survey/:slug",
     name: 'SurveyPublicView',
-    component: SurveyPublicView
+    component: SurveyPublicView,
+    beforeEnter: async (to, from, next) => {
+      const surveyStore = useSurveyStore();
+      try {
+        const response = await surveyStore.getSurveyBySlug(to.params.slug);
+        if (response.data.status === 0) {
+          to.matched[0].components.default = NotFound;
+          next();
+        } else {
+          next();
+        }
+      } catch (error) {
+        to.matched[0].components.default = NotFound;
+        next();
+      }
+    }
   },
   {
-    path: "/auth",
-    redirect: "/login",
-    name: "Auth",
-    component: AuthLayout,
+    path: "/login",
+    name: "Login",
+    component: Login,
     meta: {isGuest: true},
-    children: [
-      {
-        path: "/login",
-        name: "Login",
-        component: Login,
-      },
-      {
-        path: "/register",
-        name: "Register",
-        component: Register,
-      },
-    ],
+  },
+  {
+    path: "/register",
+    name: "Register",
+    component: Register,
+    meta: {isGuest: true},
   },
   {
     path: "/forgot-password",
