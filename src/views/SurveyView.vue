@@ -6,25 +6,20 @@
           {{ route.params.id ? model.title : "Create a Survey" }}
         </h1>
 
-        <div class="flex">
+        <div class="flex gap-2">
           <a :href="`/view/survey/${model.slug}`" target="_blank" v-if="model.slug"
-            class="flex py-2 px-4 border border-transparent text-sm rounded-md text-indigo-500 hover:bg-indigo-700 hover:text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            class="btn btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+              <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
+              <path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" />
             </svg>
-            View Public link
+            View
           </a>
-          <button v-if="route.params.id" type="button" @click="deleteSurvey()"
-            class="py-2 px-3 text-white bg-red-500 rounded-md hover:bg-red-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 -mt-1 inline-block" viewBox="0 0 20 20"
-              fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clip-rule="evenodd" />
+          <button v-if="route.params.id" type="button" @click="deleteSurvey()" class="btn btn-error">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+              <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
             </svg>
-            Delete Survey
+            Delete
           </button>
         </div>
       </div>
@@ -101,31 +96,41 @@
         </div>
         <!-- Survey Fields -->
 
-        <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-          <h3 class="text-2xl font-semibold flex items-center justify-between">
-            Questions
-            <button class="btn" type="button" @click="addQuestion(model.questions.length)">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Question
-            </button>
-          </h3>
+        <div class="px-4 py-5 bg-white space-y-6 sm:p-6" ref="referenceRef">
+          <div class="flex lg:flex lg:items-center lg:justify-between">
+            <div class="min-w-0 flex-1">
+              <h3 class="text-2xl font-semibold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Questions</h3>
+            </div>
+          </div>
+
           <div v-if="!model.questions.length" class="text-center text-gray-600">
             You don't have any questions created
           </div>
+
           <div v-for="(question, index) in model.questions" :key="question.id">
             <QuestionEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
               @deleteQuestion="deleteQuestion" />
           </div>
+
+          <div class="flex flex-col gap-2 px-2" ref="floatingRef" :style="floatingStyles">
+            <button type="button" class="btn w-full sm:w-auto" @click="addQuestion(model.questions.length)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5ZM10 8a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5A.75.75 0 0 1 10 8Z" clip-rule="evenodd" />
+              </svg>
+              Question
+            </button>
+
+            <button type="submit" class="btn w-full sm:w-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                <path fill-rule="evenodd" d="M15.988 3.012A2.25 2.25 0 0 1 18 5.25v6.5A2.25 2.25 0 0 1 15.75 14H13.5v-3.379a3 3 0 0 0-.879-2.121l-3.12-3.121a3 3 0 0 0-1.402-.791 2.252 2.252 0 0 1 1.913-1.576A2.25 2.25 0 0 1 12.25 1h1.5a2.25 2.25 0 0 1 2.238 2.012ZM11.5 3.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v.25h-3v-.25Z" clip-rule="evenodd" />
+                <path d="M3.5 6A1.5 1.5 0 0 0 2 7.5v9A1.5 1.5 0 0 0 3.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L8.44 6.439A1.5 1.5 0 0 0 7.378 6H3.5Z" />
+              </svg>
+              Save
+            </button>
+          </div>
+
         </div>
 
-        <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-          <button type="submit"
-            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Save
-          </button>
-        </div>
       </div>
     </form>
   </PageComponent>
@@ -137,8 +142,19 @@ import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSurveyStore } from "../stores/surveyStore";
 import { useDashboardStore } from '../stores/dashboardStore';
+import { flip, useFloating, autoUpdate } from '@floating-ui/vue';
+
 import PageComponent from "../components/PageComponent.vue";
 import QuestionEditor from "../components/editor/QuestionEditor.vue";
+
+const referenceRef = ref(null);
+const floatingRef = ref(null);
+
+const { floatingStyles } = useFloating(referenceRef, floatingRef, {
+  placement: 'right',
+  middleware: [ flip({ fallbackPlacements: ['bottom'] }) ],
+  whileElementsMounted: autoUpdate,
+});
 
 const router = useRouter();
 const route = useRoute();
@@ -223,9 +239,8 @@ function questionChange(question) {
   });
 }
 
-/**
- * Create or update survey
- */
+
+// Create or update survey
 async function saveSurvey() {
   let action = "created";
   if (model.value.id) {

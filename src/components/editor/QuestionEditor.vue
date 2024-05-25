@@ -4,12 +4,6 @@
     <h3 class="text-lg font-bold">{{ index + 1 }}. {{ model.question }}</h3>
 
     <div class="flex items-center gap-x-2">
-      <button class="btn btn-circle btn-outline btn-xs" type="button" @click="addQuestion()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </button>
-
       <button type="button" @click="deleteQuestion()"
         class="btn btn-circle btn-outline btn-error btn-xs">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
@@ -26,7 +20,7 @@
       </div>
       <input type="text" :name="'question_text_' + model.data" v-model="model.question" @change="dataChange"
         :id="'question_text_' + model.data"
-        class="input input-bordered w-full" />
+        class="input input-bordered w-full">
     </label>
 
     <label class="form-control w-full">
@@ -34,19 +28,19 @@
         <span class="label-text text-sm font-medium text-gray-700">Question type</span>
       </div>
       <select id="question_type" name="question_type" v-model="model.type" @change="typeChange" class="select select-bordered w-full">
-        <option v-for="type in questionTypes" :key="type" :value="type">
-          {{ upperCaseFirst(type) }}
-        </option>
+        <option v-for="type in questionTypes" :key="type" :value="type">{{ upperCaseFirst(type) }}</option>
       </select>
     </label>
   </div>
 
-  <div class="mt-3 col-span-9">
-    <label :for="'question_description_' + model.id" class="block text-sm font-medium text-gray-700">Description</label>
+  <label class="form-control w-full">
+    <div class="label">
+      <span class="label-text text-sm font-medium text-gray-700">Description</span>
+    </div>
     <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
       :id="'question_description_' + model.id"
-      class="textarea textarea-bordered w-full" />
-  </div>
+      class="textarea textarea-bordered textarea-xs w-full"></textarea>
+  </label>
 
   <div>
     <div v-if="hasOptions()" class="mt-2">
