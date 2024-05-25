@@ -10,6 +10,7 @@ const PasswordReset = () => import("../views/PasswordReset.vue");
 const Dashboard = () => import("../views/Dashboard.vue");
 const Surveys = () => import("../views/Surveys.vue");
 const SurveyView = () => import("../views/SurveyView.vue");
+const SurveyResponse = () => import("../views/SurveyResponse.vue");
 const SurveyPublicView = () => import("../views/SurveyPublicView.vue");
 
 const Learnings = () => import("../views/Learnings.vue");
@@ -30,6 +31,7 @@ const routes = [
       { path: "/surveys", name: "Surveys", component: Surveys },
       { path: "/surveys/create", name: "SurveyCreate", component: SurveyView },
       { path: "/surveys/:id", name: "SurveyView", component: SurveyView },
+      { path: "/surveys/:id/responses", name: "SurveyResponse", component: SurveyResponse },
       { path: "/learnings", name: "Learnings", component: Learnings },
     ],
   },
