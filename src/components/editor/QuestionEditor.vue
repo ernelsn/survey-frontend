@@ -1,65 +1,57 @@
 <template>
-
-  <div class="flex items-center justify-between">
-    <h3 class="text-lg font-bold">{{ index + 1 }}. {{ model.question }}</h3>
-
-    <div class="flex items-center gap-x-2">
-      <button type="button" @click="deleteQuestion()" class="btn btn-circle btn-outline btn-error btn-xs">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-          class="size-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+  <div class="mt-6 flex items-center justify-between">
+    <h2 class="text-base font-semibold leading-7 text-gray-900">{{ index + 1 }}. {{ model.question }}</h2>
+    <button type="button" @click="deleteQuestion()" class="btn btn-circle btn-outline btn-error btn-xs">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+        class="size-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
 
-  <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-3">
-    <label class="form-control w-full col-span-2">
-      <div class="label">
-        <span class="label-text text-sm font-medium text-gray-700">Question</span>
+  <div class="mt-4 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+    <div class="sm:col-span-4 sm:col-start-1">
+      <label for="'question_text_' + model.data" class="block text-sm font-medium leading-6 text-gray-900">Question</label>
+      <div class="mt-2">
+        <input type="text" class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" 
+        :name="'question_text_' + model.data" v-model="model.question" @change="dataChange" :id="'question_text_' + model.data">
       </div>
-      <input type="text" :name="'question_text_' + model.data" v-model="model.question" @change="dataChange"
-        :id="'question_text_' + model.data" class="input input-bordered w-full">
-    </label>
-
-    <label class="form-control w-full">
-      <div class="label">
-        <span class="label-text text-sm font-medium text-gray-700">Question type</span>
-      </div>
-      <select id="question_type" name="question_type" v-model="model.type" @change="typeChange"
-        class="select select-bordered w-full">
-        <option v-for="type in questionTypes" :key="type" :value="type">{{ upperCaseFirst(type) }}</option>
-      </select>
-    </label>
-  </div>
-
-  <label class="form-control w-full">
-    <div class="label">
-      <span class="label-text text-sm font-medium text-gray-700">Description</span>
     </div>
-    <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
-      :id="'question_description_' + model.id" class="textarea textarea-bordered textarea-xs w-full"></textarea>
-  </label>
 
-  <div>
-    <div v-if="hasOptions()" class="mt-2">
+    <div class="sm:col-span-2">
+      <label for="question_type" class="block text-sm font-medium leading-6 text-gray-900">Type</label>
+      <div class="mt-2">
+        <select id="question_type" name="question_type" v-model="model.type" @change="typeChange" 
+          class="select select-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6">
+          <option v-for="type in questionTypes" :key="type" :value="type">{{ upperCaseFirst(type) }}</option>
+        </select>
+      </div>
+    </div>
 
+    <div class="col-span-full">
+      <label :for="'question_description_' + model.id" class="block text-sm font-medium leading-6 text-gray-900">Description</label>
+      <div class="mt-2">
+        <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange" :id="'question_description_' + model.id" 
+          class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+      </div>
+    </div>
+
+    <div v-if="hasOptions()" class="col-span-full">
       <div v-if="model.data.options && !model.data.options.length" class="text-xs text-gray-600 text-center py-3">
         You don't have any options defined
       </div>
 
-      <h4 class="text-sm font-semibold mb-1 flex justify-between items-center">
-        Correct
-      </h4>
-      <div v-for="(option, index) in model.data.options" :key="option.uuid" class="flex items-center mb-1 gap-x-3">
-        <input v-if="model.type === 'multiple choice'" type="radio" class="radio" v-model="model.correct_option"
-          :value="option.uuid" name="is_correct" @change="dataChange" :checked="option.is_correct" />
+      <label v-if="model.data.options.length" class="block text-xs font-medium leading-6 text-gray-900">Correct</label>
 
+      <div v-for="(option, index) in model.data.options" :key="option.uuid" class="flex items-center gap-x-3 space-y-1">
+        <input v-if="model.type === 'multiple choice'" type="radio" class="radio" v-model="model.correct_option"
+          :value="option.uuid" name="is_correct" id="is_correct" @change="dataChange" :checked="option.is_correct" />
         <input v-if="model.type === 'checkbox'" type="checkbox" class="checkbox" :name='"option" + index'
           :value="option.uuid" @change="checkboxOption(option)" :checked="option.is_correct" />
 
-        <input type="text" class="input input-bordered input-sm w-full" tabindex="1" v-model="option.text"
+        <input type="text" class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6" tabindex="1" v-model="option.text"
           @change="dataChange" />
+
         <button type="button" @click="manageOptions('remove', option)"
           class="btn btn-circle btn-outline btn-error btn-xs">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -69,13 +61,11 @@
         </button>
       </div>
 
-      <button class="btn btn-xs" type="button" @click="manageOptions('add')">
+      <button class="btn btn-xs mt-3" type="button" @click="manageOptions('add')">
         <span class="text-gray-600">Add option</span>
       </button>
     </div>
   </div>
-
-  <hr class="my-4" />
 </template>
 
 <script setup>
@@ -90,7 +80,7 @@ const props = defineProps({
   index: Number,
 });
 
-const emit = defineEmits(["change", "addQuestion", "deleteQuestion"]);
+const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference"]);
 
 const model = ref({
   ...JSON.parse(JSON.stringify(props.question)),
@@ -132,6 +122,8 @@ function typeChange() {
     }
   }
   dataChange();
+
+  emit('scrollToReference');
 }
 
 function checkboxOption(option) {
@@ -153,10 +145,6 @@ function dataChange() {
   }
 
   emit("change", data);
-}
-
-function addQuestion() {
-  emit("addQuestion", props.index + 1);
 }
 
 function deleteQuestion() {
