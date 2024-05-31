@@ -1,0 +1,203 @@
+<template>
+  <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
+    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div class="py-5 px-8">
+        <div v-if="loading" class="flex justify-center">
+          <span class="loading loading-dots loading-lg mr-1"></span>
+        </div>
+
+        <div v-else-if="formFinished" class="text-center">
+          <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been submitted
+          </h1>
+          <p class="mt-6 text-base leading-7 text-gray-600">Thank you for participating in this event.</p>
+          <div class="mt-10 flex items-center justify-center gap-x-6">
+            <button @click="submitAnotherResponse" type="button"
+              class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              Submit another response
+            </button>
+            <router-link :to="{ name: 'Login' }" class="text-sm font-semibold text-gray-900">Cancel</router-link>
+          </div>
+        </div>
+
+        <form v-else @submit.prevent="submitForm" class="container mx-auto">
+          <div class="grid items-center">
+            <div class="hero">
+              <div class="hero-content flex-col lg:flex-row-reverse">
+                <img :src="form.image_url" class="max-w-sm rounded-lg shadow-2xl" height="280" width="200" />
+                <div>
+                  <h1 class="text-5xl font-bold">{{ form.title }}</h1>
+                  <p class="py-6" v-html="form.description"></p>
+                  <button v-if="!formStore.started" class="btn btn-neutral" @click="start">Start</button>
+
+                  <div v-if="formStore.started" class="flex gap-5">
+                    <div>
+                      <span class="countdown font-mono text-4xl">
+                        {{ timeLeft.hours }}
+                      </span>
+                      hours
+                    </div>
+                    <div>
+                      <span class="countdown font-mono text-4xl">
+                        {{ timeLeft.minutes }}
+                      </span>
+                      minutes
+                    </div>
+                    <div>
+                      <span class="countdown font-mono text-4xl">
+                        {{ timeLeft.seconds }}
+                      </span>
+                      sec
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="formStore.started" class="border-b border-gray-900/10 pb-12">
+            <div v-for="(question, ind) of form.questions" :key="question.id" class="mt-10 space-y-10">
+              <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
+            </div>
+          </div>
+
+          <div v-if="formStore.started" class="mt-6 flex items-center justify-start">
+            <button type="submit" class="btn btn-neutral">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <TimerExpiredDialog :hasExpired="hasExpired" @submit="submitForm" @reset="resetTimer" />
+    </div>
+  </main>
+</template>
+
+<script setup>
+import { useRoute } from "vue-router";
+import { useFormStore } from "../stores/formStore";
+import { computed, ref, onMounted } from "vue";
+
+import FormViewer from "../components/viewer/FormViewer.vue";
+import TimerExpiredDialog from "../components/TimerExpiredDialog.vue";
+
+const route = useRoute();
+const formStore = useFormStore();
+
+const loading = computed(() => formStore.currentForm.loading);
+const form = computed(() => formStore.currentForm.data);
+
+const formFinished = ref(false);
+const responses = ref({});
+
+let timerId;
+const hasExpired = ref(false);
+
+formStore.getFormBySlug(route.params.slug);
+
+const start = () => {
+  formStore.started = true;
+
+  const startTimeKey = 'startTime-' + route.params.slug;
+  const endTimeKey = 'endTime-' + route.params.slug;
+  let startTime = localStorage.getItem(startTimeKey);
+  let endTime = localStorage.getItem(endTimeKey);
+
+  if (!startTime) {
+    startTime = Date.now();
+    localStorage.setItem(startTimeKey, startTime);
+  }
+
+  if (!endTime) {
+    const timeLimit = Number(form.value.time_limit);
+    // Ensure timeLimit is a number
+    if (!isNaN(timeLimit) && timeLimit > 0) {
+      endTime = Number(startTime) + timeLimit * 60 * 1000;
+      localStorage.setItem(endTimeKey, endTime);
+    }
+  }
+
+  formStore.endTime = Number(endTime);
+
+  if (timerId) {
+    clearInterval(timerId);
+  }
+
+  timerId = setInterval(() => {
+    formStore.now = Date.now();
+    const timeLeft = Math.floor((formStore.endTime - formStore.now) / 1000);
+
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      hasExpired.value = true;
+    }
+  }, 1000);
+}
+
+function checkExpiration() {
+  const endTimeKey = 'endTime-' + route.params.slug;
+  const endTime = localStorage.getItem(endTimeKey);
+  if (endTime) {
+    const currentTime = Date.now();
+    hasExpired.value = currentTime >= Number(endTime);
+  }
+}
+
+const timeLeft = computed(() => {
+  if (!formStore.started) {
+    return { hours: '00', minutes: '00', seconds: '00' };
+  }
+
+  let timeLeft = Math.floor((formStore.endTime - formStore.now) / 1000);
+  if (timeLeft <= 0) {
+    hasExpired.value = true; // Update the reactive reference if time has expired
+    return { hours: '00', minutes: '00', seconds: '00' };
+  } else {
+    let hours = Math.floor(timeLeft / 3600);
+    let minutes = Math.floor((timeLeft % 3600) / 60);
+    let seconds = timeLeft % 60;
+
+    hours = hours < 10 ? '0' + hours : hours;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+
+    return { hours, minutes, seconds };
+  }
+});
+
+function resetTimer() {
+  hasExpired.value = false;
+}
+
+onMounted(() => {
+  // Set up an interval to update the current time in formStore
+  if (timerId) {
+    clearInterval(timerId);
+  }
+
+  timerId = setInterval(() => {
+    formStore.now = Date.now();
+  }, 1000);
+
+  checkExpiration(); // Check if the timer has already expired
+});
+
+function submitForm() {
+  formStore
+    .storeFormResponse({
+      formId: form.value.id,
+      responses: responses.value,
+    })
+    .then((response) => {
+      if (response.status === 201) {
+        formFinished.value = true;
+      }
+    })
+}
+
+function submitAnotherResponse() {
+  responses.value = {};
+  formFinished.value = false;
+}
+</script>

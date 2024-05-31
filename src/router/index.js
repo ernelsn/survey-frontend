@@ -8,17 +8,17 @@ const ForgotPassword = () => import("../views/ForgotPassword.vue");
 const PasswordReset = () => import("../views/PasswordReset.vue");
 
 const Dashboard = () => import("../views/Dashboard.vue");
-const Surveys = () => import("../views/Surveys.vue");
-const SurveyView = () => import("../views/SurveyView.vue");
-const SurveyResponse = () => import("../views/SurveyResponse.vue");
-const SurveyPublicView = () => import("../views/SurveyPublicView.vue");
+const Forms = () => import("../views/Forms.vue");
+const FormsModule = () => import("../views/FormsModule.vue");
+const FormResponses = () => import("../views/FormResponses.vue");
+const FormsPublicView = () => import("../views/FormsPublicView.vue");
 
 const Learnings = () => import("../views/Learnings.vue");
 
 const NotFound = () => import("../views/NotFound.vue");
 
 import { useAuthStore } from '../stores/authStore';
-import { useSurveyStore } from '../stores/surveyStore';
+import { useFormStore } from '../stores/formStore';
 
 const routes = [
   {
@@ -28,21 +28,21 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: "/dashboard", name: "Dashboard", component: Dashboard },
-      { path: "/surveys", name: "Surveys", component: Surveys },
-      { path: "/surveys/create", name: "SurveyCreate", component: SurveyView },
-      { path: "/surveys/:id", name: "SurveyView", component: SurveyView },
-      { path: "/surveys/:id/responses", name: "SurveyResponse", component: SurveyResponse },
+      { path: "/forms", name: "Forms", component: Forms },
+      { path: "/forms/create", name: "FormsCreate", component: FormsModule },
+      { path: "/forms/:id", name: "FormsModule", component: FormsModule },
+      { path: "/forms/:id/responses", name: "FormResponses", component: FormResponses },
       { path: "/learnings", name: "Learnings", component: Learnings },
     ],
   },
   {
-    path: "/view/survey/:slug",
-    name: 'SurveyPublicView',
-    component: SurveyPublicView,
+    path: "/view/forms/:slug/public",
+    name: 'FormsPublicView',
+    component: FormsPublicView,
     beforeEnter: async (to, from, next) => {
-      const surveyStore = useSurveyStore();
+      const formStore = useFormStore();
       try {
-        const response = await surveyStore.getSurveyBySlug(to.params.slug);
+        const response = await formStore.getFormBySlug(to.params.slug);
         if (response.data.status === 0) {
           to.matched[0].components.default = NotFound;
           next();

@@ -41,7 +41,7 @@
         You don't have any options defined
       </div>
 
-      <label v-if="model.data.options.length" class="block text-xs font-medium leading-6 text-gray-900">Correct</label>
+      <label v-if="model.data.options" class="block text-xs font-medium leading-6 text-gray-900">Correct</label>
 
       <div v-for="(option, index) in model.data.options" :key="option.uuid" class="flex items-center gap-x-3 space-y-1">
         <input v-if="model.type === 'multiple choice'" type="radio" class="radio" v-model="model.correct_option"
@@ -71,9 +71,9 @@
 <script setup>
 import { v4 as uuidv4 } from "uuid";
 import { computed, ref } from "vue";
-import { useSurveyStore } from "../../stores/surveyStore";
+import { useFormStore } from "../../stores/formStore";
 
-const surveyStore = useSurveyStore();
+const formStore = useFormStore();
 
 const props = defineProps({
   question: Object,
@@ -87,7 +87,7 @@ const model = ref({
   correct_option: null,
 });
 
-const questionTypes = computed(() => surveyStore.questionTypes);
+const questionTypes = computed(() => formStore.questionTypes);
 
 const selectedOption = computed(() => {
   return model.value.data.options.find(option => option.uuid === model.value.correct_option);

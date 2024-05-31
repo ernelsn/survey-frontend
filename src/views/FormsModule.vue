@@ -4,11 +4,11 @@
       <div class="lg:flex lg:items-center lg:justify-between">
         <div class="min-w-0 flex-1">
           <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">{{
-            route.params.id ? model.title : "Create survey" }}</h2>
+            route.params.id ? model.title : "Create form" }}</h2>
         </div>
         <div class="mt-5 flex lg:ml-4 lg:mt-0">
           <span class="sm:ml-3">
-            <a :href="`/view/survey/${model.slug}`" target="_blank" v-if="model.slug" class="btn">
+            <a :href="`/view/forms/${model.slug}/public`" target="_blank" v-if="model.slug" class="btn">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
                 <path
                   d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
@@ -35,10 +35,10 @@
       </div>
     </template>
 
-    <div v-if="surveyLoading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
+    <div v-if="formLoading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
 
     <div v-else class="mx-auto px-4 lg:px-8">
-      <form @submit.prevent="saveSurvey" class="animate-fade-in-down">
+      <form @submit.prevent="storeForm" class="animate-fade-in-down">
         <div class="space-y-12">
           <div class="border-b border-gray-900/10 pb-12">
             <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -67,6 +67,9 @@
                   <input type="text" name="title" id="title" v-model="model.title"
                     class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
+                <p v-if="formStore.errors.title && formStore.errors.title.length > 0" class="mt-3 text-sm leading-6 text-red-400">
+                  {{ formStore.errors.title[0] }}
+                </p>
               </div>
 
               <div class="col-span-full">
@@ -107,7 +110,7 @@
                 <div class="mt-6 space-y-6">
                   <div class="relative flex gap-x-3">
                     <div class="flex h-6 items-center">
-                      <input id="status" name="status" type="checkbox" v-model="model.status" class="checkbox" />
+                      <input id="is_published" name="is_published" type="checkbox" v-model="model.is_published" class="checkbox" />
                     </div>
                     <div class="text-sm leading-6">
                       <label for="comments" class="font-medium text-gray-900">Publish</label>
@@ -119,12 +122,23 @@
 
                   <div class="relative flex gap-x-3">
                     <div class="flex h-6 items-center">
-                      <input id="result" name="result" type="checkbox" v-model="model.result" class="checkbox" />
+                      <input id="show_results" name="show_results" type="checkbox" v-model="model.show_results" class="checkbox" />
                     </div>
                     <div class="text-sm leading-6">
-                      <label for="comments" class="font-medium text-gray-900">Show result</label>
+                      <label for="comments" class="font-medium text-gray-900">Show results</label>
                       <p class="text-gray-500">This configuration determines whether the score will be shown after the
                         survey.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="relative flex gap-x-3">
+                    <div class="flex h-6 items-center">
+                      <input id="multiple_attempts" name="multiple_attempts" type="checkbox" v-model="model.multiple_attempts" class="checkbox" />
+                    </div>
+                    <div class="text-sm leading-6">
+                      <label for="comments" class="font-medium text-gray-900">Multiple attempts</label>
+                      <p class="text-gray-500">This configuration determines whether to allow multiple attempts or retakes. 
                       </p>
                     </div>
                   </div>
@@ -137,7 +151,7 @@
             <h1 class="text-base font-semibold leading-7 text-gray-900">Questionnaire Part</h1>
 
             <div v-for="(question, index) in model.questions" :key="question.id">
-              <QuestionEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
+              <FormEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
                 @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference" />
             </div>
 
@@ -177,22 +191,21 @@
 import { v4 as uuidv4 } from "uuid";
 import { computed, ref, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useSurveyStore } from "../stores/surveyStore";
+import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
 
 import PageComponent from "../components/PageComponent.vue";
-import QuestionEditor from "../components/editor/QuestionEditor.vue";
+import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteSurveyDialog from "../components/DeleteSurveyDialog.vue";
 
 import { PhotoIcon } from '@heroicons/vue/24/solid';
 
-const reference = ref(null);
-
 const isOpened = ref(false);
+const reference = ref(null);
 
 const router = useRouter();
 const route = useRoute();
-const surveyStore = useSurveyStore();
+const formStore = useFormStore();
 const dashboardStore = useDashboardStore();
 
 const minDate = computed(() => {
@@ -200,35 +213,39 @@ const minDate = computed(() => {
 });
 
 // Get survey loading state, which only changes when we fetch survey from backend
-const surveyLoading = computed(() => surveyStore.currentSurvey.loading);
+const formLoading = computed(() => formStore.currentForm.loading);
 
 // Create empty survey
 let model = ref({
   title: "",
   slug: "",
-  status: false,
   description: null,
   image: null,
   image_url: null,
   expire_date: null,
   time_limit: null,
+  is_published: false,
+  show_results: false,
+  multiple_attempts: false,
   questions: [],
 });
 
 // Watch current survey data change and when this happens we update local model
 watch(
-  () => surveyStore.currentSurvey.data,
+  () => formStore.currentForm.data,
   (newVal, oldVal) => {
     model.value = {
       ...newVal,
-      status: !!newVal.status,
+      is_published: !!newVal.is_published,
+      show_results: !!newVal.show_results,
+      multiple_attempts: !!newVal.multiple_attempts,
     };
   }
 );
 
 // If the current component is rendered on survey update route we make a request to fetch survey
 if (route.params.id) {
-  surveyStore.fetchSurvey(route.params.id);
+  formStore.fetchForm(route.params.id);
 }
 
 function onImageChoose(ev) {
@@ -274,7 +291,7 @@ function deleteQuestion(question) {
 }
 
 function questionChange(question) {
-  // Important to explicitelly assign question.data.options, because otherwise it is a Proxy object
+  // Important to explicitly assign question.data.options, because otherwise it is a Proxy object
   // and it is lost in JSON.stringify()
   if (question.data.options) {
     question.data.options = [...question.data.options];
@@ -287,27 +304,31 @@ function questionChange(question) {
   });
 }
 
-// Create or update survey
-async function saveSurvey() {
+// Create or update forms
+const storeForm = async () => {
   let action = "created";
   if (model.value.id) {
     action = "updated";
   }
-  const { data } = await surveyStore.storeSurvey({ ...model.value });
-  dashboardStore.notify({
-    type: "success",
-    message: `The survey was successfully ${action}`,
-  });
-  router.push({
-    name: "SurveyView",
-    params: { id: data.data.id },
-  });
+  const response = await formStore.storeForm({ ...model.value });
+  
+  if (response && response.data) {
+    const data = response.data;
+    dashboardStore.notify({
+      type: "success",
+      message: `The form was successfully ${ action }`,
+    });
+    router.push({
+      name: "FormsModule",
+      params: { id: data.data.id },
+    });
+  }
 }
 
 function performDelete() {
-  surveyStore.deleteSurvey(model.value.id).then(() => {
+  formStore.destroyForm(model.value.id).then(() => {
     router.push({
-      name: "Surveys",
+      name: "Forms",
     });
   });
 }
