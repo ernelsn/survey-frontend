@@ -10,16 +10,27 @@
           <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been submitted
           </h1>
           <p class="mt-6 text-base leading-7 text-gray-600">Thank you for participating in this event.</p>
-          <div class="mt-10 flex items-center justify-center gap-x-6">
+
+          <div v-if="form.show_results" class="mt-10 flex items-center justify-center gap-x-6 rounded-full">
+            <div>
+              <p class="text-base font-bold leading-7 text-gray-600">You score</p>
+                <div class="mt-3 flex h-40 w-40 items-center justify-center rounded-full bg-gray-900 gap-x-3">
+                  <span class="text-5xl font-medium text-white">{{ results.totalCorrectResponse }} &#47;</span>
+                  <span class="text-3xl font-medium text-slate-400">{{  results.totalQuestion }}</span>
+                </div>
+            </div>
+          </div>
+
+          <div v-if="form.multiple_attempts" class="mt-10 flex items-center justify-center gap-x-6">
             <button @click="submitAnotherResponse" type="button"
-              class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              class="rounded-md bg-gray-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
               Submit another response
             </button>
             <router-link :to="{ name: 'Login' }" class="text-sm font-semibold text-gray-900">Cancel</router-link>
           </div>
         </div>
 
-        <form v-else @submit.prevent="submitForm" class="container mx-auto">
+        <form v-else-if="!formFinished" @submit.prevent="submitForm" class="container mx-auto">
           <div class="grid items-center">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
@@ -87,6 +98,7 @@ const formStore = useFormStore();
 
 const loading = computed(() => formStore.currentForm.loading);
 const form = computed(() => formStore.currentForm.data);
+const results = computed(() => formStore.results);
 
 const formFinished = ref(false);
 const responses = ref({});
@@ -191,6 +203,8 @@ function submitForm() {
     })
     .then((response) => {
       if (response.status === 201) {
+        formStore.showResults(form.value.id);
+
         formFinished.value = true;
       }
     })

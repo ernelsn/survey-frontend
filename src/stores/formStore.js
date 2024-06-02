@@ -27,7 +27,8 @@ export const useFormStore = defineStore('form', {
     questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
     endTime: null,
     started: false,
-    formErrors: []
+    formErrors: [],
+    results: {},
   }),
 
   getters: {
@@ -76,26 +77,6 @@ export const useFormStore = defineStore('form', {
       }
     },
 
-    // async storeForm(form) {
-    //   delete form.image_url;
-    //   let response;
-
-    //   try {
-    //     if (form.id) {
-    //       response = await formService.updateForm(form);
-    //       this.currentForm.data = response.data.data;
-    //     } else {
-    //       response = await formService.createForm(form);
-    //       this.currentForm.data = response.data.data;
-    //     }
-
-    //     this.formErrors = [];
-    //     return response;
-    //   } catch(error) {
-    //     this.formErrors = handleErrors(error);
-    //   }
-    // },
-
     async storeForm(form) {
       delete form.image_url;
       let response;
@@ -121,6 +102,11 @@ export const useFormStore = defineStore('form', {
       const res = await formService.destroyForm(id);
       await this.getForms();
       return res;
+    },
+
+    async showResults(id) {
+      const res = await formService.showResults(id);
+      this.results = res.data;
     },
   },  
   persist: {
