@@ -279,19 +279,31 @@ if (route.params.id) {
 
 // Watch for changes to model then saved as draft
 let timeout;
+let notificationShown = ref(false);
 watch(model, () => {
-  draftStore.setDraftLoaded(true);
+  if(draftStore.draftLoaded) {
+    draftStore.setDraftLoaded(true);
+  }
   if (!draftStore.draftLoaded) {
     draftStore.setFormTitle(model.value.title);
     clearTimeout(timeout);
+    let action = "draft";
     timeout = setTimeout(() => {
       draftStore.saveAsDraft(model.value);
-    }, 1000);
+      if (!notificationShown.value) {
+        dashboardStore.notify({
+          type: "success",
+          message: `Your work is being saved as a ${action} automatically`,
+        });
+        notificationShown.value = true;
+      }
+    }, 2000);
   }
 }, { deep: true });
 
 function loadDraft() {
   draftStore.loadAsDraft();
+  draftStore.setDraftLoaded(true);
   if (draftStore.data) {
     Object.assign(model.value, draftStore.data);
     let action = "loaded";
