@@ -30,10 +30,25 @@
             </button>
           </span>
 
-          <DeleteSurveyDialog :is-opened="isOpened" @toggle="(value) => isOpened = value" :on-delete="performDelete" />
+          <DeleteFormDialog :is-opened="isOpened" @toggle="(value) => isOpened = value" :on-delete="performDelete" />
         </div>
       </div>
     </template>
+
+    <div v-if="hasDraft && !draftStore.draftLoaded" class="mx-auto px-4 lg:px-8">
+      <div class="px-4 sm:px-0">
+        <h3 class="text-sm leading-7 text-gray-900">You’ve got some drafts that aren’t finished yet. Would you like to
+          proceed loading it?</h3>
+      </div>
+      <div class="mt-6 border-t border-gray-100">
+        <dl class="divide-y divide-gray-100" v-for="key in draftKeys" :key="key">
+          <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+            <dt class="text-sm font-medium leading-6 text-gray-900">{{ key.replace('_form', '') }}</dt>
+            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0"><button class="btn btn-info btn-sm" @click="loadDraft">Load draft</button></dd>
+          </div>
+        </dl>
+      </div>
+    </div>
 
     <div v-if="formLoading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
 
@@ -67,7 +82,8 @@
                   <input type="text" name="title" id="title" v-model="model.title"
                     class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
-                <p v-if="formStore.errors.title && formStore.errors.title.length > 0" class="mt-3 text-sm leading-6 text-red-400">
+                <p v-if="formStore.errors.title && formStore.errors.title.length > 0"
+                  class="mt-3 text-sm leading-6 text-red-400">
                   {{ formStore.errors.title[0] }}
                 </p>
               </div>
@@ -76,7 +92,7 @@
                 <label for="description" class="block text-sm font-medium leading-6 text-gray-900">Description</label>
                 <div class="mt-2">
                   <textarea id="description" name="description" v-model="model.description"
-                    placeholder="The description about the survey"
+                    placeholder="The description about the forms"
                     class="textarea textarea-bordered h-24 w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
               </div>
@@ -110,35 +126,39 @@
                 <div class="mt-6 space-y-6">
                   <div class="relative flex gap-x-3">
                     <div class="flex h-6 items-center">
-                      <input id="is_published" name="is_published" type="checkbox" v-model="model.is_published" class="checkbox" />
+                      <input id="is_published" name="is_published" type="checkbox" v-model="model.is_published"
+                        class="checkbox" />
                     </div>
                     <div class="text-sm leading-6">
                       <label for="comments" class="font-medium text-gray-900">Publish</label>
-                      <p class="text-gray-500">This configuration determines the publication status of the survey
-                        whether the survey should be made accessible to the intended audience or kept private.
+                      <p class="text-gray-500">This configuration determines the publication status of the forms
+                        whether the forms should be made accessible to the intended audience or kept private.
                       </p>
                     </div>
                   </div>
 
                   <div class="relative flex gap-x-3">
                     <div class="flex h-6 items-center">
-                      <input id="show_results" name="show_results" type="checkbox" v-model="model.show_results" class="checkbox" />
+                      <input id="show_results" name="show_results" type="checkbox" v-model="model.show_results"
+                        class="checkbox" />
                     </div>
                     <div class="text-sm leading-6">
                       <label for="comments" class="font-medium text-gray-900">Show results</label>
                       <p class="text-gray-500">This configuration determines whether the score will be shown after the
-                        survey.
+                        forms.
                       </p>
                     </div>
                   </div>
 
                   <div class="relative flex gap-x-3">
                     <div class="flex h-6 items-center">
-                      <input id="multiple_attempts" name="multiple_attempts" type="checkbox" v-model="model.multiple_attempts" class="checkbox" />
+                      <input id="multiple_attempts" name="multiple_attempts" type="checkbox"
+                        v-model="model.multiple_attempts" class="checkbox" />
                     </div>
                     <div class="text-sm leading-6">
                       <label for="comments" class="font-medium text-gray-900">Multiple attempts</label>
-                      <p class="text-gray-500">This configuration determines whether to allow multiple attempts or retakes. 
+                      <p class="text-gray-500">This configuration determines whether to allow multiple attempts or
+                        retakes.
                       </p>
                     </div>
                   </div>
@@ -193,10 +213,11 @@ import { computed, ref, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
+import { useDraftStore } from "../stores/draftStore";
 
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
-import DeleteSurveyDialog from "../components/DeleteSurveyDialog.vue";
+import DeleteFormDialog from "../components/DeleteFormDialog.vue";
 
 import { PhotoIcon } from '@heroicons/vue/24/solid';
 
@@ -207,15 +228,24 @@ const router = useRouter();
 const route = useRoute();
 const formStore = useFormStore();
 const dashboardStore = useDashboardStore();
+const draftStore = useDraftStore();
+
+const formLoading = computed(() => formStore.currentForm.loading);
 
 const minDate = computed(() => {
   return new Date().toISOString().slice(0, 10);
 });
 
-// Get survey loading state, which only changes when we fetch survey from backend
-const formLoading = computed(() => formStore.currentForm.loading);
+const hasDraft = computed(() => {
+  const keys = Object.keys(localStorage);
+  return keys.some(key => key.endsWith('_form'));
+});
 
-// Create empty survey
+const draftKeys = computed(() => {
+  return Object.keys(localStorage).filter(key => key.endsWith('_form'));
+});
+
+// Create empty forms
 let model = ref({
   title: "",
   slug: "",
@@ -230,7 +260,7 @@ let model = ref({
   questions: [],
 });
 
-// Watch current survey data change and when this happens we update local model
+// Watch current forms data change and when this happens we update local model
 watch(
   () => formStore.currentForm.data,
   (newVal, oldVal) => {
@@ -243,9 +273,33 @@ watch(
   }
 );
 
-// If the current component is rendered on survey update route we make a request to fetch survey
 if (route.params.id) {
   formStore.fetchForm(route.params.id);
+}
+
+// Watch for changes to model then saved as draft
+let timeout;
+watch(model, () => {
+  draftStore.setDraftLoaded(true);
+  if (!draftStore.draftLoaded) {
+    draftStore.setFormTitle(model.value.title);
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      draftStore.saveAsDraft(model.value);
+    }, 1000);
+  }
+}, { deep: true });
+
+function loadDraft() {
+  draftStore.loadAsDraft();
+  if (draftStore.data) {
+    Object.assign(model.value, draftStore.data);
+    let action = "loaded";
+    dashboardStore.notify({
+      type: "success",
+      message: `The draft was successfully ${action}`,
+    });
+  }
 }
 
 function onImageChoose(ev) {
@@ -272,9 +326,7 @@ function addQuestion(index) {
     description: null,
     data: {},
   };
-
   model.value.questions.splice(index, 0, newQuestion);
-
   scrollToReference();
 }
 
@@ -291,7 +343,8 @@ function deleteQuestion(question) {
 }
 
 function questionChange(question) {
-  // Important to explicitly assign question.data.options, because otherwise it is a Proxy object
+  // Important to explicitly assign question.data.options, 
+  // because otherwise it is a Proxy object
   // and it is lost in JSON.stringify()
   if (question.data.options) {
     question.data.options = [...question.data.options];
@@ -311,17 +364,17 @@ const storeForm = async () => {
     action = "updated";
   }
   const response = await formStore.storeForm({ ...model.value });
-  
   if (response && response.data) {
     const data = response.data;
     dashboardStore.notify({
       type: "success",
-      message: `The form was successfully ${ action }`,
+      message: `The form was successfully ${action}`,
     });
     router.push({
       name: "FormsModule",
       params: { id: data.data.id },
     });
+    draftStore.clearDraft();
   }
 }
 

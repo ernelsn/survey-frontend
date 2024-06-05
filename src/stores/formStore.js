@@ -18,17 +18,19 @@ export const useFormStore = defineStore('form', {
     forms: {
       loading: false,
       links: [],
-      data: []
+      data: [],
     },
     currentForm: {
       data: {},
       loading: false,
+      results: {},
+      loadResults: false,
     },
     questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
     endTime: null,
     started: false,
+    ended: false,
     formErrors: [],
-    results: {},
   }),
 
   getters: {
@@ -39,9 +41,9 @@ export const useFormStore = defineStore('form', {
     async getForms(url = '/api/v1/forms') {
       this.forms.loading = true;
       try {
-        const res = await formService.getForms(url);
-        this.forms.data = res.data.data;
-        this.forms.links = res.data.meta.links;
+        const response = await formService.getForms(url);
+        this.forms.data = response.data.data;
+        this.forms.links = response.data.meta.links;
       } catch (err) {
         this.error = err;
       } finally {
@@ -52,11 +54,11 @@ export const useFormStore = defineStore('form', {
     async fetchForm(id) {
       this.currentForm.loading = true;
       try {
-        const res = await formService.fetchForm(id);
-        this.currentForm.data = res.data.data;
+        const response = await formService.fetchForm(id);
+        this.currentForm.data = response.data.data;
         this.currentForm.loading = false;
 
-        return res;
+        return response;
       } catch (err) {
         this.currentForm.loading = false;
         throw err;
@@ -66,11 +68,11 @@ export const useFormStore = defineStore('form', {
     async getFormBySlug(slug) {
       this.currentForm.loading = true;
       try {
-        const res = await formService.getFormBySlug(slug);
-        this.currentForm.data = res.data.data;
+        const response = await formService.getFormBySlug(slug);
+        this.currentForm.data = response.data.data;
         this.currentForm.loading = false;
         
-        return res;
+        return response;
       } catch (err) {
         this.currentForm.loading = false;
         throw err;
@@ -99,17 +101,19 @@ export const useFormStore = defineStore('form', {
     },
 
     async destroyForm(id) {
-      const res = await formService.destroyForm(id);
+      const response = await formService.destroyForm(id);
       await this.getForms();
-      return res;
+      return response;
     },
 
     async showResults(id) {
-      const res = await formService.showResults(id);
-      this.results = res.data;
+      this.currentForm.loadResults = true;
+      const response = await formService.showResults(id);
+      this.currentForm.results = response.data;
+      this.currentForm.loadResults = false;
     },
   },  
   persist: {
-    paths: ['endTime', 'started'],
+    paths: ['endTime', 'started', 'ended', 'currentForm.results'],
   },
 });

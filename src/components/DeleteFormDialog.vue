@@ -22,11 +22,11 @@
                     <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
                   </div>
                   <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">Delete survey
+                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">Delete form
                     </DialogTitle>
                     <div class="mt-2">
-                      <p class="text-sm text-gray-500">Are you sure you want to delete this survey? All of the data
-                        pertaining to this survey will be permanently removed.
+                      <p class="text-sm text-gray-500">Are you sure you want to delete this form? All of the data
+                        pertaining to this form will be permanently removed.
                         This action cannot be undone.</p>
                     </div>
                   </div>
