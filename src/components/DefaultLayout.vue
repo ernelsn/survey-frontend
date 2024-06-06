@@ -63,7 +63,8 @@
           </div>
           <div class="-mr-2 flex md:hidden">
             <!-- Mobile menu button -->
-            <DisclosureButton class="relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+            <DisclosureButton
+              class="relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
               <span class="absolute -inset-0.5" />
               <span class="sr-only">Open main menu</span>
               <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
@@ -113,7 +114,10 @@
 
     <router-view :key="$route.path"></router-view>
 
-    <Notification />
+    <ToastNotification :show="notification.show" :on-dismiss="() => notification.show = false"
+      :intent="notification.intent" :title="notification.title">
+      <p>{{ notification.message }}</p>
+    </ToastNotification>
   </div>
 </template>
 
@@ -121,11 +125,13 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted } from 'vue';
+import { EventBus } from '../eventBus';
 
 import { useRouter } from "vue-router";
 import { useAuthStore } from '../stores/authStore';
-import Notification from "./Notification.vue";
+import { useDashboardStore } from '../stores/dashboardStore';
+import ToastNotification from "./ToastNotification.vue";
 
 const navigation = [
   { name: "Dashboard", to: { name: "Dashboard" } },
@@ -144,11 +150,24 @@ export default {
     MenuItems,
     Bars3Icon,
     XMarkIcon,
-    Notification,
+    ToastNotification,
   },
   setup() {
-    const authenticate = useAuthStore();
     const router = useRouter();
+    const authenticate = useAuthStore();
+    const dashboardStore = useDashboardStore();
+
+    const notification = computed(() => dashboardStore.notification);
+
+    onMounted(() => {
+      EventBus.on('notify', (notification) => {
+        dashboardStore.notify(notification);
+      });
+    });
+
+    onUnmounted(() => {
+      EventBus.off('notify');
+    });
 
     function logout() {
       authenticate.logout()
@@ -165,6 +184,7 @@ export default {
       user: computed(() => authenticate.user),
       navigation,
       logout,
+      notification,
     };
   },
 };

@@ -208,9 +208,13 @@
 </template>
 
 <script setup>
+import { PhotoIcon } from '@heroicons/vue/24/solid';
+
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { EventBus } from '../eventBus';
+
 import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useDraftStore } from "../stores/draftStore";
@@ -218,8 +222,6 @@ import { useDraftStore } from "../stores/draftStore";
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
-
-import { PhotoIcon } from '@heroicons/vue/24/solid';
 
 const isOpened = ref(false);
 const reference = ref(null);
@@ -231,6 +233,8 @@ const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
 
 const formLoading = computed(() => formStore.currentForm.loading);
+
+const notification = computed(() => dashboardStore.notification);
 
 const minDate = computed(() => {
   return new Date().toISOString().slice(0, 10);
@@ -244,6 +248,12 @@ const hasDraft = computed(() => {
 const draftKeys = computed(() => {
   return Object.keys(localStorage).filter(key => key.endsWith('_form'));
 });
+
+if (draftStore.draftLoaded) {
+  watchEffect(() => {
+    EventBus.emit('notify', notification.value);
+  });
+}
 
 // Create empty forms
 let model = ref({
@@ -279,7 +289,6 @@ if (route.params.id) {
 
 // Watch for changes to model then saved as draft
 let timeout;
-let notificationShown = ref(false);
 watch(model, () => {
   if(draftStore.draftLoaded) {
     draftStore.setDraftLoaded(true);
@@ -287,16 +296,13 @@ watch(model, () => {
   if (!draftStore.draftLoaded) {
     draftStore.setFormTitle(model.value.title);
     clearTimeout(timeout);
-    let action = "draft";
     timeout = setTimeout(() => {
       draftStore.saveAsDraft(model.value);
-      if (!notificationShown.value) {
-        dashboardStore.notify({
-          type: "success",
-          message: `Your work is being saved as a ${action} automatically`,
-        });
-        notificationShown.value = true;
-      }
+      EventBus.emit('notify', { 
+        intent: 'info',
+        title: 'Draft saved',
+        message: 'Your work is being saved as a draft' 
+      });
     }, 2000);
   }
 }, { deep: true });
@@ -306,10 +312,10 @@ function loadDraft() {
   draftStore.setDraftLoaded(true);
   if (draftStore.data) {
     Object.assign(model.value, draftStore.data);
-    let action = "loaded";
-    dashboardStore.notify({
-      type: "success",
-      message: `The draft was successfully ${action}`,
+    EventBus.emit('notify', { 
+      intent: 'success',
+      title: 'Draft loaded',
+      message: 'The draft was successfully loaded' 
     });
   }
 }
@@ -371,16 +377,17 @@ function questionChange(question) {
 
 // Create or update forms
 const storeForm = async () => {
-  let action = "created";
+  let action = "Created";
   if (model.value.id) {
-    action = "updated";
+    action = "Updated";
   }
   const response = await formStore.storeForm({ ...model.value });
   if (response && response.data) {
     const data = response.data;
-    dashboardStore.notify({
-      type: "success",
-      message: `The form was successfully ${action}`,
+    EventBus.emit('notify', { 
+      intent: 'success',
+      title: `${action}`,
+      message: `The form was successfully ${action.toLowerCase().trim()}` 
     });
     router.push({
       name: "FormsModule",

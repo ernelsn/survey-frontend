@@ -53,6 +53,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
+
 import { useFormStore } from "../stores/formStore";
 
 import PageComponent from "../components/PageComponent.vue";
@@ -77,6 +78,11 @@ async function performDelete() {
   await formStore.destroyForm(selectedForm.value);
   await formStore.getForms();
   showDelete.value = false;
+  EventBus.emit('notify', { 
+    intent: 'info',
+    title: `Form deleted`,
+    message: `The form was successfully deleted` 
+  });
 }
 
 function pagination(ev, link) {

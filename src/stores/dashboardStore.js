@@ -7,8 +7,9 @@ export const useDashboardStore = defineStore('dashboard', {
     data: {},
     notification: {
       show: false,
-      type: 'success',
-      message: ''
+      intent: "info",
+      title: "",
+      message: "",
     },
   }),
   actions: {
@@ -24,14 +25,17 @@ export const useDashboardStore = defineStore('dashboard', {
         return error;
       }
     },
-    notify({message, type}) {
+
+    notify({ intent, title, message }) {
       this.notification.show = true;
-      this.notification.type = type;
+      this.notification.intent = intent;
+      this.notification.title = title;
       this.notification.message = message;
+    
       setTimeout(() => {
         this.notification.show = false;
-      }, 3000);
-    },
+      }, 4000);
+    },    
   },
 });
 
