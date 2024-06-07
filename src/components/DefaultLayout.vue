@@ -125,8 +125,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 
-import { computed, onMounted, onUnmounted } from 'vue';
-import { EventBus } from '../eventBus';
+import { computed } from 'vue';
 
 import { useRouter } from "vue-router";
 import { useAuthStore } from '../stores/authStore';
@@ -158,16 +157,6 @@ export default {
     const dashboardStore = useDashboardStore();
 
     const notification = computed(() => dashboardStore.notification);
-
-    onMounted(() => {
-      EventBus.on('notify', (notification) => {
-        dashboardStore.notify(notification);
-      });
-    });
-
-    onUnmounted(() => {
-      EventBus.off('notify');
-    });
 
     function logout() {
       authenticate.logout()

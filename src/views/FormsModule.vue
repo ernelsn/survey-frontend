@@ -211,9 +211,8 @@
 import { PhotoIcon } from '@heroicons/vue/24/solid';
 
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch, nextTick, watchEffect } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { EventBus } from '../eventBus';
 
 import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
@@ -234,8 +233,6 @@ const draftStore = useDraftStore();
 
 const formLoading = computed(() => formStore.currentForm.loading);
 
-const notification = computed(() => dashboardStore.notification);
-
 const minDate = computed(() => {
   return new Date().toISOString().slice(0, 10);
 });
@@ -249,11 +246,6 @@ const draftKeys = computed(() => {
   return Object.keys(localStorage).filter(key => key.endsWith('_form'));
 });
 
-if (draftStore.draftLoaded) {
-  watchEffect(() => {
-    EventBus.emit('notify', notification.value);
-  });
-}
 
 // Create empty forms
 let model = ref({
@@ -298,21 +290,20 @@ watch(model, () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       draftStore.saveAsDraft(model.value);
-      EventBus.emit('notify', { 
+      dashboardStore.notify({
         intent: 'info',
         title: 'Draft saved',
-        message: 'Your work is being saved as a draft' 
-      });
-    }, 2000);
+        message: 'Your work is saved as a draft until submission.' 
+      })
+    }, 3000);
   }
 }, { deep: true });
 
 function loadDraft() {
   draftStore.loadAsDraft();
-  draftStore.setDraftLoaded(true);
   if (draftStore.data) {
     Object.assign(model.value, draftStore.data);
-    EventBus.emit('notify', { 
+    dashboardStore.notify({
       intent: 'success',
       title: 'Draft loaded',
       message: 'The draft was successfully loaded' 
@@ -384,7 +375,7 @@ const storeForm = async () => {
   const response = await formStore.storeForm({ ...model.value });
   if (response && response.data) {
     const data = response.data;
-    EventBus.emit('notify', { 
+    dashboardStore.notify({
       intent: 'success',
       title: `${action}`,
       message: `The form was successfully ${action.toLowerCase().trim()}` 
@@ -393,6 +384,7 @@ const storeForm = async () => {
       name: "FormsModule",
       params: { id: data.data.id },
     });
+    draftStore.setDraftLoaded(true);
     draftStore.clearDraft();
   }
 }
@@ -401,6 +393,11 @@ function performDelete() {
   formStore.destroyForm(model.value.id).then(() => {
     router.push({
       name: "Forms",
+    });
+    dashboardStore.notify({
+      intent: 'success',
+      title: `Form deleted`,
+      message: `The form was successfully deleted` 
     });
   });
 }

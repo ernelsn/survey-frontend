@@ -55,6 +55,7 @@
 import { ref, computed } from "vue";
 
 import { useFormStore } from "../stores/formStore";
+import { useDashboardStore } from '../stores/dashboardStore';
 
 import PageComponent from "../components/PageComponent.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
@@ -64,6 +65,7 @@ const showDelete = ref(false);
 const selectedForm = ref(null);
 
 const formStore = useFormStore();
+const dashboardStore = useDashboardStore();
 
 const forms = computed(() => formStore.forms);
 
@@ -78,10 +80,10 @@ async function performDelete() {
   await formStore.destroyForm(selectedForm.value);
   await formStore.getForms();
   showDelete.value = false;
-  EventBus.emit('notify', { 
+  dashboardStore.notify({
     intent: 'info',
     title: `Form deleted`,
-    message: `The form was successfully deleted` 
+    message: `The form was successfully deleted`
   });
 }
 
