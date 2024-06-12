@@ -11,17 +11,20 @@
 
   <div class="mt-4 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
     <div class="sm:col-span-4 sm:col-start-1">
-      <label for="'question_text_' + model.data" class="block text-sm font-medium leading-6 text-gray-900">Question</label>
+      <label for="'question_text_' + model.data"
+        class="block text-sm font-medium leading-6 text-gray-900">Question</label>
       <div class="mt-2">
-        <input type="text" class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" 
-        :name="'question_text_' + model.data" v-model="model.question" @change="dataChange" :id="'question_text_' + model.data">
+        <input type="text"
+          class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+          :name="'question_text_' + model.data" v-model="model.question" @change="dataChange"
+          :id="'question_text_' + model.data">
       </div>
     </div>
 
     <div class="sm:col-span-2">
       <label for="question_type" class="block text-sm font-medium leading-6 text-gray-900">Type</label>
       <div class="mt-2">
-        <select id="question_type" name="question_type" v-model="model.type" @change="typeChange" 
+        <select id="question_type" name="question_type" v-model="model.type" @change="typeChange"
           class="select select-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6">
           <option v-for="type in questionTypes" :key="type" :value="type">{{ upperCaseFirst(type) }}</option>
         </select>
@@ -29,10 +32,29 @@
     </div>
 
     <div class="col-span-full">
-      <label :for="'question_description_' + model.id" class="block text-sm font-medium leading-6 text-gray-900">Description</label>
-      <div class="mt-2">
-        <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange" :id="'question_description_' + model.id" 
+      <label :for="'question_description_' + model.id" class="block text-sm font-medium leading-6 text-gray-900">
+        Description
+        <button type="button" class="btn btn-xs btn-circle" @click="toggleElements">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-4">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+          </svg>
+        </button>
+      </label>
+      <div class="mt-2" v-if="showTextarea">
+        <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
+          :id="'question_description_' + model.id"
           class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+      </div>
+      <div class="mt-2 col-span-full" v-if="showFileUpload">
+        <file-pond :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
+          id="image" ref="pond" class-name="my-pond" label-idle="Drop files here..." credits="false"
+          allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
+            url: '',
+            process: handleFilePondProcess,
+            revert: handleFilePondRevert,
+          }" />
       </div>
     </div>
 
@@ -49,8 +71,9 @@
         <input v-if="model.type === 'checkbox'" type="checkbox" class="checkbox" :name='"option" + index'
           :value="option.uuid" @change="checkboxOption(option)" :checked="option.is_correct" />
 
-        <input type="text" class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6" tabindex="1" v-model="option.text"
-          @change="dataChange" />
+        <input type="text"
+          class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+          tabindex="1" v-model="option.text" @change="dataChange" />
 
         <button type="button" @click="manageOptions('remove', option)"
           class="btn btn-circle btn-outline btn-error btn-xs">
@@ -72,15 +95,32 @@
 import { v4 as uuidv4 } from "uuid";
 import { computed, ref } from "vue";
 import { useFormStore } from "../../stores/formStore";
+import { useUploadStore } from "../../stores/uploadStore";
+
+import vueFilePond from 'vue-filepond';
+
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
+import FilePondPluginFilePoster from 'filepond-plugin-file-poster';
+
+import 'filepond/dist/filepond.min.css';
+import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
+import 'filepond-plugin-file-poster/dist/filepond-plugin-file-poster.css';
+
+const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview, FilePondPluginFilePoster);
 
 const formStore = useFormStore();
+const uploadStore = useUploadStore();
+
+const showTextarea = ref(true);
+const showFileUpload = ref(false);
 
 const props = defineProps({
   question: Object,
   index: Number,
 });
 
-const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference"]);
+const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "descriptionAsImage"]);
 
 const model = ref({
   ...JSON.parse(JSON.stringify(props.question)),
@@ -149,5 +189,29 @@ function dataChange() {
 
 function deleteQuestion() {
   emit("deleteQuestion", props.question);
+}
+
+function toggleElements() {
+  showTextarea.value = !showTextarea.value;
+  showFileUpload.value = !showFileUpload.value;
+}
+
+async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
+  try {
+    const res = await uploadStore.processDescriptionAsImage(file);
+    load(res.data);
+    emit('descriptionAsImage', { index: props.index, description: res.data });
+  } catch (err) {
+    error('An error occurred');
+  }
+}
+
+async function handleFilePondRevert(uniqueFileId, load, error) {
+  try {
+    await uploadStore.revert(uniqueFileId);
+    load();
+  } catch (err) {
+    error('An error occurred');
+  }
 }
 </script>

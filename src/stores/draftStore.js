@@ -16,15 +16,15 @@ export const useDraftStore = defineStore('draft', {
       multiple_attempts: false,
       questions: [],
     },
-    draftLoaded: false,
+    state: 'initial',
   }),
   actions: {
     setFormTitle(title) {
       this.formTitle = title;
     },
 
-    setDraftLoaded(value) {
-      this.draftLoaded = value;
+    setFormState(state) {
+      this.state = state;
     },
 
     saveAsDraft(data) {
@@ -44,8 +44,18 @@ export const useDraftStore = defineStore('draft', {
       }
     },
 
-    clearDraft() {
+    isEqualWithDraft() {
       const key = this.formTitle + '_form';
+      const savedDraft = localStorage.getItem(key);
+      if (savedDraft) {
+        const savedData = JSON.parse(savedDraft);
+        return JSON.stringify(this.data) === JSON.stringify(savedData);
+      }
+      return false;
+    },    
+
+    clearDraft(title) {
+      const key = title + '_form';
       localStorage.removeItem(key);
       this.data = {};
     },

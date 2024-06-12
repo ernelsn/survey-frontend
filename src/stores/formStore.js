@@ -80,7 +80,6 @@ export const useFormStore = defineStore('form', {
     },
 
     async storeForm(form) {
-      delete form.image_url;
       let response;
       try {
         if (form.id) {

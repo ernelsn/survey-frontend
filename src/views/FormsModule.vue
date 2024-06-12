@@ -35,44 +35,57 @@
       </div>
     </template>
 
-    <div v-if="hasDraft && !draftStore.draftLoaded" class="mx-auto px-4 lg:px-8">
+    <!-- <div v-if="formLoading && hasDraft" class="mx-auto px-4 lg:px-8">
+      <div class="animate-pulse flex space-x-4">
+        <div class="flex-1 space-y-6 py-1">
+          <div class="h-2 bg-slate-200 rounded"></div>
+          <div class="space-y-3">
+            <div class="grid grid-cols-3 gap-4">
+              <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+              <div class="rounded-full bg-slate-200 h-2 w-2 col-span-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> -->
+    <div v-if="hasDraft && draftStore.state != 'loaded' && draftStore.state != 'submitted'"
+      class="mx-auto px-4 lg:px-8">
       <div class="px-4 sm:px-0">
         <h3 class="text-sm leading-7 text-gray-900">You’ve got some drafts that aren’t finished yet. Would you like to
           proceed loading it?</h3>
       </div>
       <div class="mt-6 border-t border-gray-100">
-        <dl class="divide-y divide-gray-100" v-for="key in draftKeys" :key="key">
+        <dl class="divide-y divide-gray-100" v-for="key in currentFormDraft" :key="key">
           <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
             <dt class="text-sm font-medium leading-6 text-gray-900">{{ key.replace('_form', '') }}</dt>
-            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0"><button class="btn btn-info btn-sm" @click="loadDraft">Load draft</button></dd>
+            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0"><button class="btn btn-info btn-sm"
+                @click="loadDraft">Load draft</button></dd>
           </div>
         </dl>
       </div>
     </div>
 
-    <div v-if="formLoading" class="flex justify-center"><span class="loading loading-dots loading-lg"></span></div>
-
+    <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
+        class="loading loading-dots loading-lg"></span></div>
     <div v-else class="mx-auto px-4 lg:px-8">
-      <form @submit.prevent="storeForm" class="animate-fade-in-down">
+      <form @submit.prevent="storeForm" class="animate-fade-in-down" @input="fieldUpdate">
         <div class="space-y-12">
           <div class="border-b border-gray-900/10 pb-12">
             <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              <div class="col-span-full">
-                <label for="cover-photo" class="block text-sm font-medium leading-6 text-gray-900">Photo</label>
-                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                  <div class="text-center">
-                    <img v-if="model.image_url" :src="model.image_url" :alt="model.title"
-                      class="w-64 h-48 object-cover" />
-                    <PhotoIcon v-else class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
-                    <div class="mt-4 flex text-sm leading-6 text-gray-600">
-                      <label for="file-upload"
-                        class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
-                        <span>Upload an image</span>
-                        <input id="file-upload" name="file-upload" type="file" class="sr-only"
-                          @change="onImageChoose" />
-                      </label>
-                    </div>
-                  </div>
+              <div class="col-span-full group relative">
+                <label for="image" class="block text-sm font-medium leading-6 text-gray-900">Image</label>
+                <div v-if="model.image_url"
+                  class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
+                  <img v-if="model.image_url" :src="model.image_url" :alt="model.title"
+                    class="h-full w-full object-cover object-center">
+                </div>
+                <div class="mt-2">
+                  <file-pond name="image" id="image" ref="pond" class-name="my-pond" label-idle="Drop files here..."
+                    credits="false" allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
+                      url: '',
+                      process: handleFilePondProcess,
+                      revert: handleFilePondRevert,
+                    }" />
                 </div>
               </div>
 
@@ -172,7 +185,8 @@
 
             <div v-for="(question, index) in model.questions" :key="question.id">
               <FormEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
-                @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference" />
+                @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference"
+                @descriptionAsImage="descriptionAsImage" />
             </div>
 
             <div v-if="!model.questions.length" class="mt-1 text-sm leading-6 text-gray-600 text-center">
@@ -208,19 +222,30 @@
 </template>
 
 <script setup>
-import { PhotoIcon } from '@heroicons/vue/24/solid';
-
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useDraftStore } from "../stores/draftStore";
+import { useUploadStore } from "../stores/uploadStore";
 
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
+
+import vueFilePond from 'vue-filepond';
+
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
+import FilePondPluginFilePoster from 'filepond-plugin-file-poster';
+
+import 'filepond/dist/filepond.min.css';
+import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
+import 'filepond-plugin-file-poster/dist/filepond-plugin-file-poster.css';
+
+const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview, FilePondPluginFilePoster);
 
 const isOpened = ref(false);
 const reference = ref(null);
@@ -230,6 +255,7 @@ const route = useRoute();
 const formStore = useFormStore();
 const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
+const uploadStore = useUploadStore();
 
 const formLoading = computed(() => formStore.currentForm.loading);
 
@@ -242,18 +268,25 @@ const hasDraft = computed(() => {
   return keys.some(key => key.endsWith('_form'));
 });
 
-const draftKeys = computed(() => {
+const allDrafts = computed(() => {
   return Object.keys(localStorage).filter(key => key.endsWith('_form'));
 });
 
+const currentFormDraft = computed(() => {
+  const formTitle = model.value.title.toLowerCase() + '_form';
+  if (model.value.title) {
+    return Object.keys(localStorage).filter(key => key.toLowerCase() === formTitle);
+  } else {
+    return allDrafts.value;
+  }
+});
 
 // Create empty forms
 let model = ref({
   title: "",
   slug: "",
   description: null,
-  image: null,
-  image_url: null,
+  image: [],
   expire_date: null,
   time_limit: null,
   is_published: false,
@@ -262,7 +295,7 @@ let model = ref({
   questions: [],
 });
 
-// Watch current forms data change and when this happens we update local model
+// Watch current form data change and when this happens we update local model
 watch(
   () => formStore.currentForm.data,
   (newVal, oldVal) => {
@@ -279,54 +312,6 @@ if (route.params.id) {
   formStore.fetchForm(route.params.id);
 }
 
-// Watch for changes to model then saved as draft
-let timeout;
-watch(model, () => {
-  if(draftStore.draftLoaded) {
-    draftStore.setDraftLoaded(true);
-  }
-  if (!draftStore.draftLoaded) {
-    draftStore.setFormTitle(model.value.title);
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      draftStore.saveAsDraft(model.value);
-      dashboardStore.notify({
-        intent: 'info',
-        title: 'Draft saved',
-        message: 'Your work is saved as a draft until submission.' 
-      })
-    }, 3000);
-  }
-}, { deep: true });
-
-function loadDraft() {
-  draftStore.loadAsDraft();
-  if (draftStore.data) {
-    Object.assign(model.value, draftStore.data);
-    dashboardStore.notify({
-      intent: 'success',
-      title: 'Draft loaded',
-      message: 'The draft was successfully loaded' 
-    });
-  }
-}
-
-function onImageChoose(ev) {
-  const file = ev.target.files[0];
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    setImage(reader.result);
-    ev.target.value = "";
-  };
-  reader.readAsDataURL(file);
-}
-
-function setImage(image) {
-  model.value.image = image;
-  model.value.image_url = image;
-}
-
 function addQuestion(index) {
   const newQuestion = {
     id: uuidv4(),
@@ -339,32 +324,40 @@ function addQuestion(index) {
   scrollToReference();
 }
 
-function scrollToReference() {
-  nextTick(() => {
-    if (reference.value) {
-      reference.value.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-}
-
 function deleteQuestion(question) {
   model.value.questions = model.value.questions.filter((q) => q !== question);
 }
 
+// function questionChange(question) {
+//   // Important to explicitly assign question.data.options, 
+//   // because otherwise it is a Proxy object
+//   // and it is lost in JSON.stringify()
+//   if (question.data.options) {
+//     question.data.options = [...question.data.options];
+//   }
+//   model.value.questions = model.value.questions.map((q) => {
+//     if (q.id === question.id) {
+//       return { ...question };
+//     }
+//     return q;
+//   });
+// }
+
 function questionChange(question) {
-  // Important to explicitly assign question.data.options, 
-  // because otherwise it is a Proxy object
-  // and it is lost in JSON.stringify()
   if (question.data.options) {
     question.data.options = [...question.data.options];
   }
-  model.value.questions = model.value.questions.map((q) => {
+
+  const newQuestions = model.value.questions.map((q) => {
     if (q.id === question.id) {
       return { ...question };
     }
     return q;
   });
+
+  model.value.questions = newQuestions;
 }
+
 
 // Create or update forms
 const storeForm = async () => {
@@ -378,14 +371,14 @@ const storeForm = async () => {
     dashboardStore.notify({
       intent: 'success',
       title: `${action}`,
-      message: `The form was successfully ${action.toLowerCase().trim()}` 
+      message: `The form was successfully ${action.toLowerCase().trim()}`
     });
     router.push({
       name: "FormsModule",
       params: { id: data.data.id },
     });
-    draftStore.setDraftLoaded(true);
-    draftStore.clearDraft();
+    draftStore.setFormState('submitted')
+    draftStore.clearDraft(model.value.title);
   }
 }
 
@@ -397,8 +390,73 @@ function performDelete() {
     dashboardStore.notify({
       intent: 'success',
       title: `Form deleted`,
-      message: `The form was successfully deleted` 
+      message: `The form was successfully deleted`
     });
   });
 }
+
+function descriptionAsImage({ index, description }) {
+  model.value.questions[index].description = description;
+}
+
+async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
+  try {
+    const res = await uploadStore.process(file);
+    load(res.data);
+    model.value.image = res.data;
+  } catch (err) {
+    error('An error occurred');
+  }
+}
+
+async function handleFilePondRevert(uniqueFileId, load, error) {
+  try {
+    await uploadStore.revert(uniqueFileId);
+    load();
+  } catch (err) {
+    error('An error occurred');
+  }
+}
+
+function fieldUpdate() {
+  draftStore.setFormState('modified');
+}
+
+let timeout;
+watch(model, () => {
+  draftStore.setFormTitle(model.value.title);
+  clearTimeout(timeout);
+  timeout = setTimeout(() => {
+    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified') {
+      draftStore.saveAsDraft(model.value);
+      dashboardStore.notify({
+        intent: 'info',
+        title: 'Draft saved',
+        message: 'Your work is saved as a draft until submission.'
+      });
+    }
+  }, 2000);
+}, { deep: true });
+
+async function loadDraft() {
+  draftStore.loadAsDraft();
+  draftStore.setFormState('loaded');
+  if (draftStore.data) {
+    Object.assign(model.value, draftStore.data);
+    dashboardStore.notify({
+      intent: 'success',
+      title: 'Draft loaded',
+      message: 'The draft was successfully loaded'
+    });
+  }
+}
+
+function scrollToReference() {
+  nextTick(() => {
+    if (reference.value) {
+      reference.value.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+}
+
 </script>
