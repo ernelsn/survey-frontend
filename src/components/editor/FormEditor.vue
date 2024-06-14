@@ -32,25 +32,43 @@
     </div>
 
     <div class="col-span-full">
-      <label :for="'question_description_' + model.id" class="block text-sm font-medium leading-6 text-gray-900">
+      <label :for="'question_description_' + model.id"
+        class="text-sm font-medium leading-6 text-gray-900 flex items-center justify-between">
         Description
-        <button type="button" class="btn btn-xs btn-circle" @click="toggleElements">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="size-4">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-          </svg>
-        </button>
+        <div class="flex gap-x-3">
+          <button type="button" class="btn btn-xs btn-circle" @click="toggleText">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="size-4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+          </button>
+
+          <button type="button" class="btn btn-xs btn-circle" @click="toggleFilePond">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="size-4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+          </button>
+        </div>
       </label>
-      <div class="mt-2" v-if="showTextarea">
-        <textarea :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
-          :id="'question_description_' + model.id"
-          class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+      <div v-if="model.description_url && !showTextarea"
+        class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
+        <img v-if="model.description_url" :src="model.description_url" v-fullscreen-image="{
+          imageUrl: model.description_url,
+          withDownload: false,
+          animation: 'fade',
+        }" class="h-full w-full object-cover object-center">
       </div>
-      <div class="mt-2 col-span-full" v-if="showFileUpload">
-        <file-pond :name="'question_description_' + model.id" v-model="model.description" @change="dataChange"
-          id="image" ref="pond" class-name="my-pond" label-idle="Drop files here..." credits="false"
-          allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
+      <div class="mt-2 col-span-full">
+        <textarea v-if="showTextarea" :name="'question_description_' + model.id" v-model="model.description"
+          @change="dataChange" :id="'question_description_' + model.id"
+          class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+
+        <editor-file-pond v-if="showFilePond" :name="'question_description_' + model.id" v-model="model.description"
+          @change="dataChange" id="description" ref="form-editor-pond" class-name="form-editor-pond" label-idle="Drop files here..."
+          credits="false" allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
             url: '',
             process: handleFilePondProcess,
             revert: handleFilePondRevert,
@@ -101,30 +119,29 @@ import vueFilePond from 'vue-filepond';
 
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
-import FilePondPluginFilePoster from 'filepond-plugin-file-poster';
 
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
-import 'filepond-plugin-file-poster/dist/filepond-plugin-file-poster.css';
 
-const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview, FilePondPluginFilePoster);
+const EditorFilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
 const formStore = useFormStore();
 const uploadStore = useUploadStore();
 
 const showTextarea = ref(true);
-const showFileUpload = ref(false);
+const showFilePond = ref(false);
 
 const props = defineProps({
   question: Object,
   index: Number,
 });
 
-const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "descriptionAsImage"]);
+const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "questionDescriptionAsImage"]);
 
 const model = ref({
   ...JSON.parse(JSON.stringify(props.question)),
   correct_option: null,
+  type: "short answer",
 });
 
 const questionTypes = computed(() => formStore.questionTypes);
@@ -191,16 +208,26 @@ function deleteQuestion() {
   emit("deleteQuestion", props.question);
 }
 
-function toggleElements() {
-  showTextarea.value = !showTextarea.value;
-  showFileUpload.value = !showFileUpload.value;
+if(model.value.description_url) {
+  showFilePond.value = true;
+  showTextarea.value = false;
+}
+
+function toggleText() {
+  showTextarea.value = true;
+  showFilePond.value = false;
+}
+
+function toggleFilePond() {
+  showFilePond.value = true;
+  showTextarea.value = false;
 }
 
 async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
   try {
     const res = await uploadStore.processDescriptionAsImage(file);
     load(res.data);
-    emit('descriptionAsImage', { index: props.index, description: res.data });
+    emit('questionDescriptionAsImage', { index: props.index, description: res.data });
   } catch (err) {
     error('An error occurred');
   }

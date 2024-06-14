@@ -8,7 +8,6 @@ export const useDraftStore = defineStore('draft', {
       slug: "",
       description: null,
       image: null,
-      image_url: null,
       expire_date: null,
       time_limit: null,
       is_published: false,

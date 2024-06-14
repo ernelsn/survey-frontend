@@ -3,6 +3,9 @@ import { createPinia } from "pinia";
 import router from './router';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
+import { fullscreenImagePlugin } from 'vue-3-fullscreen-image-directive-plugin';
+import 'vue-3-fullscreen-image-directive-plugin/style.css';
+
 import './axios';
 import './index.css';
 
@@ -19,4 +22,5 @@ pinia.use(piniaPluginPersistedstate)
 const app = createApp(App)
 app.use(pinia)
 app.use(router)
+app.use(fullscreenImagePlugin)
 app.mount('#app')

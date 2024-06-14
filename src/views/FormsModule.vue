@@ -35,19 +35,6 @@
       </div>
     </template>
 
-    <!-- <div v-if="formLoading && hasDraft" class="mx-auto px-4 lg:px-8">
-      <div class="animate-pulse flex space-x-4">
-        <div class="flex-1 space-y-6 py-1">
-          <div class="h-2 bg-slate-200 rounded"></div>
-          <div class="space-y-3">
-            <div class="grid grid-cols-3 gap-4">
-              <div class="h-2 bg-slate-200 rounded col-span-2"></div>
-              <div class="rounded-full bg-slate-200 h-2 w-2 col-span-1"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
     <div v-if="hasDraft && draftStore.state != 'loaded' && draftStore.state != 'submitted'"
       class="mx-auto px-4 lg:px-8">
       <div class="px-4 sm:px-0">
@@ -76,11 +63,15 @@
                 <label for="image" class="block text-sm font-medium leading-6 text-gray-900">Image</label>
                 <div v-if="model.image_url"
                   class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
-                  <img v-if="model.image_url" :src="model.image_url" :alt="model.title"
+                  <img v-if="model.image_url" :src="model.image_url" :alt="model.title" v-fullscreen-image="{
+                        imageUrl: model.image_url,
+                        withDownload: false,
+                        animation: 'fade',
+                      }"
                     class="h-full w-full object-cover object-center">
                 </div>
                 <div class="mt-2">
-                  <file-pond name="image" id="image" ref="pond" class-name="my-pond" label-idle="Drop files here..."
+                  <module-file-pond name="image" id="image" ref="form-module-pond" class-name="form-module-pond" label-idle="Drop files here..."
                     credits="false" allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
                       url: '',
                       process: handleFilePondProcess,
@@ -186,7 +177,7 @@
             <div v-for="(question, index) in model.questions" :key="question.id">
               <FormEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
                 @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference"
-                @descriptionAsImage="descriptionAsImage" />
+                @questionDescriptionAsImage="questionDescriptionAsImage" />
             </div>
 
             <div v-if="!model.questions.length" class="mt-1 text-sm leading-6 text-gray-600 text-center">
@@ -223,7 +214,7 @@
 
 <script setup>
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch, nextTick, onMounted } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useFormStore } from "../stores/formStore";
@@ -239,13 +230,11 @@ import vueFilePond from 'vue-filepond';
 
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
-import FilePondPluginFilePoster from 'filepond-plugin-file-poster';
 
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
-import 'filepond-plugin-file-poster/dist/filepond-plugin-file-poster.css';
 
-const FilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview, FilePondPluginFilePoster);
+const ModuleFilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
 const isOpened = ref(false);
 const reference = ref(null);
@@ -328,21 +317,6 @@ function deleteQuestion(question) {
   model.value.questions = model.value.questions.filter((q) => q !== question);
 }
 
-// function questionChange(question) {
-//   // Important to explicitly assign question.data.options, 
-//   // because otherwise it is a Proxy object
-//   // and it is lost in JSON.stringify()
-//   if (question.data.options) {
-//     question.data.options = [...question.data.options];
-//   }
-//   model.value.questions = model.value.questions.map((q) => {
-//     if (q.id === question.id) {
-//       return { ...question };
-//     }
-//     return q;
-//   });
-// }
-
 function questionChange(question) {
   if (question.data.options) {
     question.data.options = [...question.data.options];
@@ -357,7 +331,6 @@ function questionChange(question) {
 
   model.value.questions = newQuestions;
 }
-
 
 // Create or update forms
 const storeForm = async () => {
@@ -395,7 +368,7 @@ function performDelete() {
   });
 }
 
-function descriptionAsImage({ index, description }) {
+function questionDescriptionAsImage({ index, description }) {
   model.value.questions[index].description = description;
 }
 
@@ -427,7 +400,7 @@ watch(model, () => {
   draftStore.setFormTitle(model.value.title);
   clearTimeout(timeout);
   timeout = setTimeout(() => {
-    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified') {
+    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified' && model.value.title != null){
       draftStore.saveAsDraft(model.value);
       dashboardStore.notify({
         intent: 'info',

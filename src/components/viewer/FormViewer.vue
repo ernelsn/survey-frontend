@@ -6,6 +6,14 @@
           <span class="label-text font-medium text-gray-900">{{ index + 1 }}. {{ question.question }}</span>
         </div>
         <div class="label">
+          <div v-if="question.description_url"
+            class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
+            <img v-if="question.description_url" :src="question.description_url" v-fullscreen-image="{
+              imageUrl: question.description_url,
+              withDownload: false,
+              animation: 'fade',
+            }" class="h-full w-full object-cover object-center">
+          </div>
           <span class="label-text text-gray-500 text-sm">{{ question.description }}</span>
         </div>
       </label>
