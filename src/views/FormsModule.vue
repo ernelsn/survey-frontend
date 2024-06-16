@@ -64,15 +64,15 @@
                 <div v-if="model.image_url"
                   class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
                   <img v-if="model.image_url" :src="model.image_url" :alt="model.title" v-fullscreen-image="{
-                        imageUrl: model.image_url,
-                        withDownload: false,
-                        animation: 'fade',
-                      }"
-                    class="h-full w-full object-cover object-center">
+                    imageUrl: model.image_url,
+                    withDownload: false,
+                    animation: 'fade',
+                  }" class="h-full w-full object-cover object-center">
                 </div>
                 <div class="mt-2">
-                  <module-file-pond name="image" id="image" ref="form-module-pond" class-name="form-module-pond" label-idle="Drop files here..."
-                    credits="false" allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
+                  <module-file-pond name="image" id="image" ref="form-module-pond" class-name="form-module-pond"
+                    label-idle="Drop files here..." credits="false" allow-multiple="true"
+                    accepted-file-types="image/jpeg, image/png" :server="{
                       url: '',
                       process: handleFilePondProcess,
                       revert: handleFilePondRevert,
@@ -174,7 +174,10 @@
           <div class="border-b border-gray-900/10 pb-12">
             <h1 class="text-base font-semibold leading-7 text-gray-900">Questionnaire Part</h1>
 
-            <div v-for="(question, index) in model.questions" :key="question.id">
+            <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
+              class="loading loading-dots loading-lg"></span></div>
+
+            <div v-else v-for="(question, index) in model.questions" :key="question.id">
               <FormEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
                 @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference"
                 @questionDescriptionAsImage="questionDescriptionAsImage" />
@@ -236,15 +239,15 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
 const ModuleFilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview);
 
-const isOpened = ref(false);
-const reference = ref(null);
-
 const router = useRouter();
 const route = useRoute();
 const formStore = useFormStore();
 const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
 const uploadStore = useUploadStore();
+
+const isOpened = ref(false);
+const reference = ref(null);
 
 const formLoading = computed(() => formStore.currentForm.loading);
 
@@ -269,6 +272,10 @@ const currentFormDraft = computed(() => {
     return allDrafts.value;
   }
 });
+
+if (route.params.id) {
+  formStore.fetchForm(route.params.id);
+}
 
 // Create empty forms
 let model = ref({
@@ -297,8 +304,19 @@ watch(
   }
 );
 
-if (route.params.id) {
-  formStore.fetchForm(route.params.id);
+function questionChange(question) {
+  if (question.data.options) {
+    question.data.options = [...question.data.options];
+  }
+
+  const newQuestions = model.value.questions.map((q) => {
+    if (q.id === question.id) {
+      return { ...question };
+    }
+    return q;
+  });
+
+  model.value.questions = newQuestions;
 }
 
 function addQuestion(index) {
@@ -315,21 +333,6 @@ function addQuestion(index) {
 
 function deleteQuestion(question) {
   model.value.questions = model.value.questions.filter((q) => q !== question);
-}
-
-function questionChange(question) {
-  if (question.data.options) {
-    question.data.options = [...question.data.options];
-  }
-
-  const newQuestions = model.value.questions.map((q) => {
-    if (q.id === question.id) {
-      return { ...question };
-    }
-    return q;
-  });
-
-  model.value.questions = newQuestions;
 }
 
 // Create or update forms
@@ -400,7 +403,7 @@ watch(model, () => {
   draftStore.setFormTitle(model.value.title);
   clearTimeout(timeout);
   timeout = setTimeout(() => {
-    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified' && model.value.title != null){
+    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified' && model.value.title != null) {
       draftStore.saveAsDraft(model.value);
       dashboardStore.notify({
         intent: 'info',

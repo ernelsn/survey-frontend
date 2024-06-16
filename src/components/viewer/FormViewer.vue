@@ -49,6 +49,23 @@
         </div>
       </div>
 
+      <div v-if="question.type === 'linear scale'">
+        <div v-for="(option) of question.data.options" :key="option.uuid" class="flex flex-col items-center mb-4">
+          <div class="flex justify-between w-full mb-2">
+            <label v-for="(value, index) in generateValues(option.from_option, option.to_option)"
+              :key="`${option.uuid}-${index}`" class="inline-flex items-center cursor-pointer">
+              <input type="radio" :name="'question' + question.id" :value="value"
+                class="radio" @change="emits('update:modelValue', $event.target.value)" />
+              <span class="label-text ml-1">{{ value }}</span>
+            </label>
+          </div>
+          <div class="flex justify-between w-full">
+            <span class="label-text">{{ option.from_label }}</span>
+            <span class="label-text">{{ option.to_label }}</span>
+          </div>
+        </div>
+      </div>
+
       <div v-else-if="question.type === 'short answer'">
         <input type="text" :value="modelValue" @input="emits('update:modelValue', $event.target.value)"
           class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6" />
@@ -88,5 +105,13 @@ function onCheckboxChange($event) {
     }
   }
   emits("update:modelValue", selectedOptions);
+}
+
+function generateValues(from, to) {
+  const values = [];
+  for (let i = from; i <= to; i++) {
+    values.push(i);
+  }
+  return values;
 }
 </script>

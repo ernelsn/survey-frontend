@@ -67,8 +67,9 @@
           class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
 
         <editor-file-pond v-if="showFilePond" :name="'question_description_' + model.id" v-model="model.description"
-          @change="dataChange" id="description" ref="form-editor-pond" class-name="form-editor-pond" label-idle="Drop files here..."
-          credits="false" allow-multiple="true" accepted-file-types="image/jpeg, image/png" :server="{
+          @change="dataChange" id="description" ref="form-editor-pond" class-name="form-editor-pond"
+          label-idle="Drop files here..." credits="false" allow-multiple="true"
+          accepted-file-types="image/jpeg, image/png" :server="{
             url: '',
             process: handleFilePondProcess,
             revert: handleFilePondRevert,
@@ -81,32 +82,64 @@
         You don't have any options defined
       </div>
 
-      <label v-if="model.data.options" class="block text-xs font-medium leading-6 text-gray-900">Correct</label>
+      <label v-if="model.data.options && model.type != 'linear scale'"
+        class="block text-xs font-medium leading-6 text-gray-900">Correct</label>
 
-      <div v-for="(option, index) in model.data.options" :key="option.uuid" class="flex items-center gap-x-3 space-y-1">
-        <input v-if="model.type === 'multiple choice'" type="radio" class="radio" v-model="model.correct_option"
-          :value="option.uuid" name="is_correct" id="is_correct" @change="dataChange" :checked="option.is_correct" />
-        <input v-if="model.type === 'checkbox'" type="checkbox" class="checkbox" :name='"option" + index'
-          :value="option.uuid" @change="checkboxOption(option)" :checked="option.is_correct" />
+      <div v-for="(option, index) in model.data.options" :key="option.uuid">
+        <fieldset v-if="model.type === 'linear scale'">
+          <div class="flex items-center gap-x-3 space-y-1">
+            <select
+              class="select select-sm select-bordered w-1/6 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+              v-model="option.from_option" @change="dataChange">
+              <option disabled selected>From</option>
+              <option v-for="n in [0, 1]" :key="n" :value="n">{{ n }}</option>
+            </select>
+            <input type="text"
+              class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+              v-model="option.from_label" @change="dataChange" />
+          </div>
+          <div class="flex items-center gap-x-3">
+            <select
+              class="select select-sm select-bordered w-1/6 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+              v-model="option.to_option" @change="dataChange">
+              <option disabled selected>To</option>
+              <option v-for="n in [2, 3, 4, 5, 6, 7, 8, 9, 10]" :key="n" :value="n">{{ n }}</option>
+            </select>
+            <input type="text"
+              class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+              v-model="option.to_label" @change="dataChange" />
+          </div>
+        </fieldset>
+        <fieldset v-else>
+          <div class="flex items-center gap-x-3 space-y-1">
+            <input v-if="model.type === 'multiple choice' || model.type === 'dropdown'" type="radio" class="radio"
+              v-model="model.correct_option" :value="option.uuid" :name="'is_correct_' + model.id"
+              :id="'is_correct_' + model.id" @change="dataChange" :checked="option.is_correct" />
+            <input v-if="model.type === 'checkbox'" type="checkbox" class="checkbox" :name='"option" + index'
+              :value="option.uuid" @change="checkboxOption(option)" :checked="option.is_correct" />
 
-        <input type="text"
-          class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-          tabindex="1" v-model="option.text" @change="dataChange" />
+            <input type="text"
+              class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+              v-model="option.text" @change="dataChange" />
 
-        <button type="button" @click="manageOptions('remove', option)"
-          class="btn btn-circle btn-outline btn-error btn-xs">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-            <path
-              d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
-          </svg>
+            <button type="button" @click="manageOptions('remove', option)"
+              class="btn btn-circle btn-outline btn-error btn-xs">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                <path
+                  d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
+              </svg>
+            </button>
+          </div>
+        </fieldset>
+      </div>
+      <div v-if="model.type != 'linear scale'">
+        <button class="btn btn-xs mt-3" type="button" @click="manageOptions('add')">
+          <span class="text-gray-600">Add option</span>
         </button>
       </div>
-
-      <button class="btn btn-xs mt-3" type="button" @click="manageOptions('add')">
-        <span class="text-gray-600">Add option</span>
-      </button>
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -140,8 +173,6 @@ const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToRe
 
 const model = ref({
   ...JSON.parse(JSON.stringify(props.question)),
-  correct_option: null,
-  type: "short answer",
 });
 
 const questionTypes = computed(() => formStore.questionTypes);
@@ -155,7 +186,7 @@ function upperCaseFirst(str) {
 }
 
 function hasOptions() {
-  return ["multiple choice", "checkbox", "dropdown"].includes(model.value.type);
+  return ["multiple choice", "checkbox", "dropdown", "linear scale"].includes(model.value.type);
 }
 
 function manageOptions(action, option) {
@@ -179,28 +210,20 @@ function typeChange() {
     }
   }
   dataChange();
-
   emit('scrollToReference');
 }
 
-function checkboxOption(option) {
-  option.is_correct = !option.is_correct;
-  dataChange();
-}
-
 function dataChange() {
-  if (model.value.type === 'multiple choice') {
+  if (["multiple choice", "dropdown"].includes(model.value.type)) {
     // For radio buttons, only one option can be correct.
     for (const option of model.value.data.options) {
       option.is_correct = option.uuid === model.value.correct_option;
     }
   }
-
   const data = model.value;
   if (!hasOptions()) {
     delete data.data.options;
   }
-
   emit("change", data);
 }
 
@@ -208,7 +231,12 @@ function deleteQuestion() {
   emit("deleteQuestion", props.question);
 }
 
-if(model.value.description_url) {
+function checkboxOption(option) {
+  option.is_correct = !option.is_correct;
+  dataChange();
+}
+
+if (model.value.description_url) {
   showFilePond.value = true;
   showTextarea.value = false;
 }

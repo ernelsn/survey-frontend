@@ -26,7 +26,9 @@ export const useFormStore = defineStore('form', {
       results: {},
       loadResults: false,
     },
+    questionCorrectOptions: {},
     questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
+    // questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale", "true or false"],
     endTime: null,
     started: false,
     ended: false,
@@ -80,14 +82,17 @@ export const useFormStore = defineStore('form', {
     },
 
     async storeForm(form) {
+      this.currentForm.loading = true;
       let response;
       try {
         if (form.id) {
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
+          this.currentForm.loading = false;
         } else {
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
+          this.currentForm.loading = false;
         }
         return response;
       } catch(error) {
