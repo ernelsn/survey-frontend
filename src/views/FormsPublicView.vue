@@ -6,13 +6,13 @@
           <span class="loading loading-dots loading-lg mr-1"></span>
         </div>
 
-        <div v-else-if="formStore.ended" class="text-center">
+        <div v-else-if="formResponseStore.ended" class="text-center">
           <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been submitted
           </h1>
           <p class="mt-6 text-base leading-7 text-gray-600">Thank you for participating in this event.</p>
 
           <div v-if="form.show_results" class="mt-10 flex items-center justify-center gap-x-6 rounded-full">
-            <div v-if="loadingResult" class="flex justify-center">
+            <div v-if="loadResult" class="flex justify-center">
               <span class="loading loading-dots loading-lg mr-1"></span>
             </div>
             <div v-else>
@@ -33,7 +33,7 @@
           </div>
         </div>
 
-        <form v-else-if="!formStore.ended" @submit.prevent="submitForm" class="container mx-auto">
+        <form v-else-if="!formResponseStore.ended" @submit.prevent="submitForm" class="container mx-auto">
           <div class="grid items-center">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
@@ -41,9 +41,9 @@
                 <div>
                   <h1 class="text-5xl font-bold">{{ form.title }}</h1>
                   <p class="py-6" v-html="form.description"></p>
-                  <button v-if="!formStore.started" class="btn btn-neutral" @click="start">Start</button>
+                  <button v-if="!formResponseStore.started" class="btn btn-neutral" @click="start">Start</button>
 
-                  <div v-if="formStore.started" class="flex gap-5">
+                  <div v-if="formResponseStore.started" class="flex gap-5">
                     <div>
                       <span class="countdown font-mono text-4xl">
                         {{ timeLeft.hours }}
@@ -69,13 +69,13 @@
             </div>
           </div>
 
-          <div v-if="formStore.started" class="border-b border-gray-900/10 pb-12">
+          <div v-if="formResponseStore.started" class="border-b border-gray-900/10 pb-12">
             <div v-for="(question, ind) of form.questions" :key="question.id" class="mt-10 space-y-10">
               <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
             </div>
           </div>
 
-          <div v-if="formStore.started" class="mt-6 flex items-center justify-start">
+          <div v-if="formResponseStore.started" class="mt-6 flex items-center justify-start">
             <button type="submit" class="btn btn-neutral">
               Submit
             </button>
@@ -89,32 +89,36 @@
 </template>
 
 <script setup>
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
+
 import { useFormStore } from "../stores/formStore";
-import { computed, ref, onMounted } from "vue";
+import { useFormResponseStore } from "../stores/formResponseStore";
 
 import FormViewer from "../components/viewer/FormViewer.vue";
 import TimerExpiredDialog from "../components/TimerExpiredDialog.vue";
 
 const route = useRoute();
 const formStore = useFormStore();
+const formResponseStore = useFormResponseStore();
 
 const loading = computed(() => formStore.currentForm.loading);
 const form = computed(() => formStore.currentForm.data);
-const results = computed(() => formStore.currentForm.results);
-const loadingResult = computed(() => formStore.currentForm.loadResults);
 
-let timerId;
+const results = computed(() => formResponseStore.results);
+const loadResult = computed(() => formResponseStore.loadResults);
+
+let timerId = null;
 const responses = ref({});
 const hasExpired = ref(false);
 
 formStore.getFormBySlug(route.params.slug);
 
 const start = () => {
-  formStore.started = true;
-
+  formResponseStore.started = true;
   const startTimeKey = 'startTime-' + route.params.slug;
   const endTimeKey = 'endTime-' + route.params.slug;
+
   let startTime = localStorage.getItem(startTimeKey);
   let endTime = localStorage.getItem(endTimeKey);
 
@@ -123,7 +127,9 @@ const start = () => {
     localStorage.setItem(startTimeKey, startTime);
   }
 
-  if (!endTime) {
+  formResponseStore.startTime = Number(startTime);
+
+  if (!endTime && form.value.time_limit) {
     const timeLimit = Number(form.value.time_limit);
     if (!isNaN(timeLimit) && timeLimit > 0) {
       endTime = Number(startTime) + timeLimit * 60 * 1000;
@@ -131,29 +137,29 @@ const start = () => {
     }
   }
 
-  formStore.endTime = Number(endTime);
+  formResponseStore.endTime = Number(endTime) || null;
+  formResponseStore.now = formResponseStore.startTime;
 
   if (timerId) {
     clearInterval(timerId);
   }
 
   timerId = setInterval(() => {
-    formStore.now = Date.now();
-    const timeLeft = Math.floor((formStore.endTime - formStore.now) / 1000);
-
+    formResponseStore.now += 1000;
+    const timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
     if (timeLeft <= 0) {
       clearInterval(timerId);
       hasExpired.value = true;
     }
   }, 1000);
-}
+};
 
 const timeLeft = computed(() => {
-  if (!formStore.started) {
+  if (!formResponseStore.started || formResponseStore.endTime === null) {
     return { hours: '00', minutes: '00', seconds: '00' };
   }
 
-  let timeLeft = Math.floor((formStore.endTime - formStore.now) / 1000);
+  let timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
   if (timeLeft <= 0) {
     hasExpired.value = true;
     return { hours: '00', minutes: '00', seconds: '00' };
@@ -179,24 +185,12 @@ function checkExpiration() {
   }
 }
 
-function resetTimer() {
+const resetTimer = () => {
   hasExpired.value = false;
-}
-
-onMounted(() => {
-  if (timerId) {
-    clearInterval(timerId);
-  }
-
-  timerId = setInterval(() => {
-    formStore.now = Date.now();
-  }, 1000);
-
-  checkExpiration();
-});
+};
 
 function submitForm() {
-  formStore
+  formResponseStore
     .storeFormResponse({
       formId: form.value.id,
       responses: responses.value,
@@ -204,11 +198,10 @@ function submitForm() {
     .then((response) => {
       if (response.status === 201) {
         if (form.value.show_results) {
-          formStore.showResults(form.value.id);
+          formResponseStore.showResults(form.value.id);
         }
-        formStore.ended = true;
-        formStore.started = false;
-
+        formResponseStore.ended = true;
+        formResponseStore.started = false;
         clearStorage();
       }
     })
@@ -220,14 +213,27 @@ function clearStorage() {
 
   localStorage.removeItem(startTimeKey);
   localStorage.removeItem(endTimeKey);
+  localStorage.removeItem('response');
 }
 
 function submitAnotherResponse() {
   responses.value = {};
-  formStore.ended = false;
-  results.value = {};
-
+  formResponseStore.ended = false;
   clearStorage();
   start();
 }
+
+onMounted(() => {
+  checkExpiration();
+  if (timerId) {
+    clearInterval(timerId);
+  }
+  timerId = setInterval(() => {
+    formResponseStore.now = Date.now();
+  }, 1000);
+});
+
+onUnmounted(() => {
+  clearInterval(timerId);
+});
 </script>

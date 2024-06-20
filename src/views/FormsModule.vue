@@ -274,7 +274,7 @@ const currentFormDraft = computed(() => {
 });
 
 if (route.params.id) {
-  formStore.fetchForm(route.params.id);
+  formStore.getForm(route.params.id);
 }
 
 // Create empty forms

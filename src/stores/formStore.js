@@ -13,7 +13,6 @@ const handleErrors = (error) => {
 }
 
 export const useFormStore = defineStore('form', {
-
   state: () => ({
     forms: {
       loading: false,
@@ -23,15 +22,9 @@ export const useFormStore = defineStore('form', {
     currentForm: {
       data: {},
       loading: false,
-      results: {},
-      loadResults: false,
     },
     questionCorrectOptions: {},
     questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
-    // questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale", "true or false"],
-    endTime: null,
-    started: false,
-    ended: false,
     formErrors: [],
   }),
 
@@ -53,10 +46,10 @@ export const useFormStore = defineStore('form', {
       }
     },
 
-    async fetchForm(id) {
+    async getForm(id) {
       this.currentForm.loading = true;
       try {
-        const response = await formService.fetchForm(id);
+        const response = await formService.getForm(id);
         this.currentForm.data = response.data.data;
         this.currentForm.loading = false;
 
@@ -100,24 +93,10 @@ export const useFormStore = defineStore('form', {
       }
     },
 
-    async storeFormResponse({formId, responses}) {
-      return formService.storeFormResponse(formId, responses);
-    },
-
     async destroyForm(id) {
       const response = await formService.destroyForm(id);
       await this.getForms();
       return response;
     },
-
-    async showResults(id) {
-      this.currentForm.loadResults = true;
-      const response = await formService.showResults(id);
-      this.currentForm.results = response.data;
-      this.currentForm.loadResults = false;
-    },
-  },  
-  persist: {
-    paths: ['endTime', 'started', 'ended', 'currentForm.results'],
   },
 });
