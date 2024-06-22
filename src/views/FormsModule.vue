@@ -174,28 +174,72 @@
           <div class="border-b border-gray-900/10 pb-12">
             <h1 class="text-base font-semibold leading-7 text-gray-900">Questionnaire Part</h1>
 
-            <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
-              class="loading loading-dots loading-lg"></span></div>
+            <div v-for="(section, sectionIndex) in model.sections" :key="sectionIndex" class="mt-2">
+              <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                  <div class="card-actions justify-end">
+                    <button @click="removeSection(sectionIndex)" type="button"
+                      class="btn btn-circle btn-outline btn-error btn-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <label for="title" class="block text-sm font-medium leading-6 text-gray-900">
+                    Section {{ sectionIndex + 1 }}
+                    <span v-if="section.title">: {{ section.title }}</span>
+                  </label>
+                  <div class="mt-2">
+                    <input type="text" name="title" id="title" v-model="section.title"
+                      class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
+                  </div>
+                  <div class="col-span-full">
+                    <textarea v-model="section.description"
+                      class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 card bg-base-100 shadow-xl">
+                <div class="card-body">
+                  <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
+                      class="loading loading-dots loading-lg"></span></div>
+                  <div v-for="(question, questionIndex) in section.questions" :key="question.id">
+                    <FormEditor :question="question" :questionIndex="questionIndex" :sectionIndex="sectionIndex"
+                      @change="(q) => questionChange(q, sectionIndex, questionIndex)"
+                      @addQuestion="(i) => addQuestion(i, sectionIndex)"
+                      @deleteQuestion="() => deleteQuestion(sectionIndex, questionIndex)"
+                      @scrollToReference="(sectionIndex, questionIndex) => scrollToReference(sectionIndex, questionIndex)"
+                      @questionDescriptionAsImage="(sIndex, qIndex, desc) => questionDescriptionAsImage(sIndex, qIndex, desc)" />
+                  </div>
 
-            <div v-else v-for="(question, index) in model.questions" :key="question.id">
-              <FormEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion"
-                @deleteQuestion="deleteQuestion" @scrollToReference="scrollToReference"
-                @questionDescriptionAsImage="questionDescriptionAsImage" />
-            </div>
-
-            <div v-if="!model.questions.length" class="mt-1 text-sm leading-6 text-gray-600 text-center">
-              No questions have been created yet. Please proceed with your first creation.
+                  <div v-if="!section.questions.length" class="mt-1 text-sm leading-6 text-gray-600 text-center">
+                    No questions have been created yet. Please proceed with your first creation.
+                  </div>
+                </div>
+                <div class="card-body">
+                  <button type="button" class="btn w-full" @click="addQuestion(section.questions.length, sectionIndex)"
+                    :ref="el => { if (el) referenceBtn[sectionIndex] = el }">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                      <path fill-rule="evenodd"
+                        d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5ZM10 8a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5A.75.75 0 0 1 10 8Z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    Add question
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="mt-6 flex flex-col items-stretch gap-y-3">
-            <button type="button" class="btn w-full" @click="addQuestion(model.questions.length)" ref="reference">
+            <button type="button" class="btn w-full" @click="addSection">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
                 <path fill-rule="evenodd"
                   d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5ZM10 8a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5A.75.75 0 0 1 10 8Z"
                   clip-rule="evenodd" />
               </svg>
-              Add question
+              Add section
             </button>
             <button type="submit" class="btn btn-neutral w-full">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
@@ -247,7 +291,7 @@ const draftStore = useDraftStore();
 const uploadStore = useUploadStore();
 
 const isOpened = ref(false);
-const reference = ref(null);
+const referenceBtn = ref({})
 
 const formLoading = computed(() => formStore.currentForm.loading);
 
@@ -288,7 +332,11 @@ let model = ref({
   is_published: false,
   show_results: false,
   multiple_attempts: false,
-  questions: [],
+  sections: [{
+    title: "",
+    description: "",
+    questions: [],
+  }],
 });
 
 // Watch current form data change and when this happens we update local model
@@ -304,22 +352,20 @@ watch(
   }
 );
 
-function questionChange(question) {
-  if (question.data.options) {
-    question.data.options = [...question.data.options];
-  }
-
-  const newQuestions = model.value.questions.map((q) => {
-    if (q.id === question.id) {
-      return { ...question };
-    }
-    return q;
-  });
-
-  model.value.questions = newQuestions;
+function addSection() {
+  const newSection = {
+    title: "",
+    description: "",
+    questions: [],
+  };
+  model.value.sections.push(newSection);
 }
 
-function addQuestion(index) {
+function removeSection(sectionIndex) {
+  model.value.sections.splice(sectionIndex, 1);
+}
+
+function addQuestion(index, sectionIndex) {
   const newQuestion = {
     id: uuidv4(),
     type: "text",
@@ -327,12 +373,30 @@ function addQuestion(index) {
     description: null,
     data: {},
   };
-  model.value.questions.splice(index, 0, newQuestion);
-  scrollToReference();
+  model.value.sections[sectionIndex].questions.splice(index, 0, newQuestion);
+
+  nextTick(() => {
+    scrollToReference(sectionIndex);
+  });
 }
 
-function deleteQuestion(question) {
-  model.value.questions = model.value.questions.filter((q) => q !== question);
+function questionChange(question, sectionIndex, questionIndex) {
+  if (question.data.options) {
+    question.data.options = [...question.data.options];
+  }
+
+  const newQuestions = model.value.sections[sectionIndex].questions.map((q, index) => {
+    if (index === questionIndex) {
+      return { ...question };
+    }
+    return q;
+  });
+
+  model.value.sections[sectionIndex].questions = newQuestions;
+}
+
+function deleteQuestion(sectionIndex, questionIndex) {
+  model.value.sections[sectionIndex].questions = model.value.sections[sectionIndex].questions.filter((q, index) => index !== questionIndex);
 }
 
 // Create or update forms
@@ -371,8 +435,8 @@ function performDelete() {
   });
 }
 
-function questionDescriptionAsImage({ index, description }) {
-  model.value.questions[index].description = description;
+function questionDescriptionAsImage(sectionIndex, questionIndex, description) {
+  model.value.sections[sectionIndex].questions[questionIndex].description = description;
 }
 
 async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
@@ -427,12 +491,11 @@ async function loadDraft() {
   }
 }
 
-function scrollToReference() {
-  nextTick(() => {
-    if (reference.value) {
-      reference.value.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
+function scrollToReference(sectionIndex) {
+  const button = referenceBtn.value[sectionIndex];
+  if (button) {
+    button.scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 </script>

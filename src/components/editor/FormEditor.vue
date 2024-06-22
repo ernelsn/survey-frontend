@@ -1,6 +1,6 @@
 <template>
   <div class="mt-6 flex items-center justify-between">
-    <h2 class="text-base font-semibold leading-7 text-gray-900">{{ index + 1 }}. {{ model.question }}</h2>
+    <h2 class="text-base font-semibold leading-7 text-gray-900">{{ questionIndex + 1 }}. {{ model.question }}</h2>
     <button type="button" @click="deleteQuestion()" class="btn btn-circle btn-outline btn-error btn-xs">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
         class="size-4">
@@ -166,7 +166,8 @@ const showFilePond = ref(false);
 
 const props = defineProps({
   question: Object,
-  index: Number,
+  questionIndex: Number,
+  sectionIndex: Number,
 });
 
 const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "questionDescriptionAsImage"]);
@@ -210,7 +211,7 @@ function typeChange() {
     }
   }
   dataChange();
-  emit('scrollToReference');
+  emit('scrollToReference', props.sectionIndex, props.questionIndex);
 }
 
 function dataChange() {
@@ -255,8 +256,9 @@ async function handleFilePondProcess(fieldName, file, metadata, load, error, pro
   try {
     const res = await uploadStore.processDescriptionAsImage(file);
     load(res.data);
-    emit('questionDescriptionAsImage', { index: props.index, description: res.data });
+    emit('questionDescriptionAsImage', props.sectionIndex, props.questionIndex, res.data );
   } catch (err) {
+    console.error('Error occurred:', err);
     error('An error occurred');
   }
 }

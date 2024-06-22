@@ -6,9 +6,6 @@ const formResponseService = new FormResponseService(axiosClient);
 
 export const useFormResponseStore = defineStore('response', {
   state: () => ({
-    forms: {
-      data: [],
-    },
     results: {},
     loadResults: false,
     startTime: null,
