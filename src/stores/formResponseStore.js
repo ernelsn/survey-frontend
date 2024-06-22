@@ -6,7 +6,13 @@ const formResponseService = new FormResponseService(axiosClient);
 
 export const useFormResponseStore = defineStore('response', {
   state: () => ({
-    results: {},
+    results: {
+      overall_results: {
+        total_questions: 0,
+        total_correct_responses: 0,
+      },
+      section_results: [],
+    },
     loadResults: false,
     startTime: null,
     endTime: null,
@@ -21,10 +27,16 @@ export const useFormResponseStore = defineStore('response', {
 
     async showResults(id) {
       this.loadResults = true;
-      const response = await formResponseService.showResults(id);
-      this.results = response.data;
-      this.loadResults = false;
+      try {
+        const response = await formResponseService.showResults(id);
+        this.results = response.data;
+      } catch (error) {
+        console.error('Error fetching results:', error);
+      } finally {
+        this.loadResults = false;
+      }
     },
+    
   },
   persist: {
     paths: ['endTime', 'started', 'ended', 'results'],

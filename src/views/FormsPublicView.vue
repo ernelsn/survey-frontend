@@ -16,10 +16,18 @@
               <span class="loading loading-dots loading-lg mr-1"></span>
             </div>
             <div v-else>
-              <p class="text-base font-bold leading-7 text-gray-600">You score</p>
+              <p class="text-base font-bold leading-7 text-gray-600">Your Overall Score</p>
               <div class="mt-3 flex h-40 w-40 items-center justify-center rounded-full bg-gray-900 gap-x-3">
-                <span class="text-5xl font-medium text-white">{{ results.totalCorrectResponse }} &#47;</span>
-                <span class="text-3xl font-medium text-slate-400">{{ results.totalQuestion }}</span>
+                <span class="text-5xl font-medium text-white">{{ results.overall_results.total_correct_responses }}
+                  &#47;</span>
+                <span class="text-3xl font-medium text-slate-400">{{ results.overall_results.total_questions }}</span>
+              </div>
+              <div v-for="section in results.section_results" :key="section.section_id" class="mt-6">
+                <p class="text-base font-semibold leading-7 text-gray-600">{{ section.section_title }}</p>
+                <div class="mt-2 flex items-center justify-center rounded-full bg-gray-200 p-3">
+                  <span class="text-3xl font-medium text-gray-900">{{ section.correct_responses }} &#47;</span>
+                  <span class="text-2xl font-medium text-gray-600">{{ section.total_questions }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -37,7 +45,12 @@
           <div class="grid items-center">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
-                <img :src="form.image_url" class="max-w-sm rounded-lg shadow-2xl" height="280" width="200" />
+                <img :src="form.image_url" class="max-w-sm rounded-lg shadow-2xl" height="280" width="200"
+                  v-fullscreen-image="{
+                    imageUrl: form.image_url,
+                    withDownload: false,
+                    animation: 'fade',
+                  }" />
                 <div>
                   <h1 class="text-5xl font-bold">{{ form.title }}</h1>
                   <p class="py-6" v-html="form.description"></p>
@@ -69,9 +82,17 @@
             </div>
           </div>
 
-          <div v-if="formResponseStore.started" class="border-b border-gray-900/10 pb-12">
-            <div v-for="(question, ind) of form.questions" :key="question.id" class="mt-10 space-y-10">
-              <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
+          <div v-if="formResponseStore.started">
+            <div v-for="(section, sectionIndex) in form.sections" :key="sectionIndex"
+              class="mb-5 border-b border-gray-900/10 pb-12">
+              <label for="title" class="block text-sm font-medium leading-6 text-gray-900">
+                Section {{ sectionIndex + 1 }}
+                <span v-if="section.title">: {{ section.title }}</span>
+                <span v-if="section.description">{{ section.description }}</span>
+              </label>
+              <div v-for="(question, ind) of section.questions" :key="question.id" class="mt-3">
+                <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
+              </div>
             </div>
           </div>
 
@@ -190,10 +211,18 @@ const resetTimer = () => {
 };
 
 function submitForm() {
+  const formattedResponses = form.value.sections.flatMap(section =>
+    section.questions.map(question => ({
+      sectionId: section.id,
+      questionId: question.id,
+      response: responses.value[question.id]
+    }))
+  );
+
   formResponseStore
     .storeFormResponse({
       formId: form.value.id,
-      responses: responses.value,
+      responses: formattedResponses,
     })
     .then((response) => {
       if (response.status === 201) {

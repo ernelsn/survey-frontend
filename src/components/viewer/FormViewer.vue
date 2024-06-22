@@ -18,7 +18,7 @@
         </div>
       </label>
     </div>
-    <div class="mt-6 space-y-6">
+    <div class="">
       <div v-if="question.type === 'dropdown'">
         <select :value="modelValue" @change="emits('update:modelValue', $event.target.value)"
           class="select select-bordered w-full py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6">
