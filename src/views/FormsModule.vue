@@ -175,7 +175,10 @@
             <h1 class="text-base font-semibold leading-7 text-gray-900">Questionnaire Part</h1>
 
             <div v-for="(section, sectionIndex) in model.sections" :key="sectionIndex" class="mt-2">
-              <div class="card bg-base-100 shadow-xl">
+              <div class="relative card bg-base-100 shadow-xl">
+                <div class="absolute top-0 left-0 bg-slate-800 text-white text-sm py-1 px-3 rounded-tl-lg rounded-br-lg">
+                  Section {{ sectionIndex + 1 }}
+                </div>
                 <div class="card-body">
                   <div class="card-actions justify-end">
                     <button @click="removeSection(sectionIndex)" type="button"
@@ -186,17 +189,15 @@
                       </svg>
                     </button>
                   </div>
-                  <label for="title" class="block text-sm font-medium leading-6 text-gray-900">
-                    Section {{ sectionIndex + 1 }}
-                    <span v-if="section.title">: {{ section.title }}</span>
-                  </label>
                   <div class="mt-2">
                     <input type="text" name="title" id="title" v-model="section.title"
-                      class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
+                      class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" 
+                      placeholder="Title (optional)"/>
                   </div>
                   <div class="col-span-full">
                     <textarea v-model="section.description"
-                      class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
+                      class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+                      placeholder="Description (optional)"></textarea>
                   </div>
                 </div>
               </div>
@@ -348,8 +349,15 @@ watch(
       is_published: !!newVal.is_published,
       show_results: !!newVal.show_results,
       multiple_attempts: !!newVal.multiple_attempts,
+      sections: newVal.sections ? newVal.sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        description: section.description,
+        questions: section.questions || [],
+      })) : [],
     };
-  }
+  },
+  { deep: true }
 );
 
 function addSection() {
@@ -405,7 +413,21 @@ const storeForm = async () => {
   if (model.value.id) {
     action = "Updated";
   }
-  const response = await formStore.storeForm({ ...model.value });
+
+  const sectionsData = model.value.sections.map(section => {
+    const sectionData = {
+      ...section,
+      id: section.id
+    };
+    return sectionData;
+  });
+
+  const formData = {
+    ...model.value,
+    sections: sectionsData
+  };
+
+  const response = await formStore.storeForm(formData);
   if (response && response.data) {
     const data = response.data;
     dashboardStore.notify({
@@ -419,6 +441,15 @@ const storeForm = async () => {
     });
     draftStore.setFormState('submitted')
     draftStore.clearDraft(model.value.title);
+
+    if (data.data.sections) {
+      model.value.sections = data.data.sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        description: section.description,
+        questions: section.questions || [],
+      }));
+    }
   }
 }
 
@@ -441,9 +472,10 @@ function questionDescriptionAsImage(sectionIndex, questionIndex, description) {
 
 async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
   try {
-    const res = await uploadStore.process(file);
+    const res = await uploadStore.processImage(file);
     load(res.data);
     model.value.image = res.data;
+    console.log(res.data);
   } catch (err) {
     error('An error occurred');
   }

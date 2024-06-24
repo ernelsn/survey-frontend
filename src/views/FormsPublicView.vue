@@ -42,10 +42,10 @@
         </div>
 
         <form v-else-if="!formResponseStore.ended" @submit.prevent="submitForm" class="container mx-auto">
-          <div class="grid items-center">
+          <div class="grid items-center mb-5">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
-                <img :src="form.image_url" class="max-w-sm rounded-lg shadow-2xl" height="280" width="200"
+                <img :src="form.image_url" class="max-w-sm rounded-lg" height="280" width="200"
                   v-fullscreen-image="{
                     imageUrl: form.image_url,
                     withDownload: false,
@@ -82,7 +82,7 @@
             </div>
           </div>
 
-          <div v-if="formResponseStore.started">
+          <div v-if="formResponseStore.started" class="grid items-center">
             <div v-for="(section, sectionIndex) in form.sections" :key="sectionIndex"
               class="mb-5 border-b border-gray-900/10 pb-12">
               <label for="title" class="block text-sm font-medium leading-6 text-gray-900">

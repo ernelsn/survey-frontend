@@ -3,26 +3,24 @@ import axiosClient from "../axios";
 
 export const useUploadStore = defineStore("upload", {
   actions: {
-    async process(file) {
+    async uploadFile(file, type) {
       try {
         const formData = new FormData();
-        formData.append('image', file);
-        const response = await axiosClient.post(`/api/v1/uploads`, formData);
+        formData.append(type, file);
+        const response = await axiosClient.post('/api/v1/uploads', formData);
         return response;
       } catch (error) {
-        return error;
+        console.error(`Error uploading ${type}:`, error);
+        throw error;
       }
     },
 
+    async processImage(file) {
+      return this.uploadFile(file, 'image');
+    },
+
     async processDescriptionAsImage(file) {
-      try {
-        const formData = new FormData();
-        formData.append('description', file);
-        const response = await axiosClient.post(`/api/v1/uploads`, formData);
-        return response;
-      } catch (error) {
-        return error;
-      }
+      return this.uploadFile(file, 'description');
     },
 
     async revert(folder) {

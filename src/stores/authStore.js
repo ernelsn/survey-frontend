@@ -75,7 +75,6 @@ export const useAuthStore = defineStore('auth', {
     async handleLogout() {
       this.authUser = null;
       this.isAuthenticated = false;
-      localStorage.removeItem("vuex");
       for (let key in localStorage) {
         if (key.startsWith('startTime-')) {
           localStorage.removeItem(key);

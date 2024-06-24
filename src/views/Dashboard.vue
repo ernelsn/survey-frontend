@@ -103,7 +103,7 @@
 
 <script setup>
 import PageComponent from "../components/PageComponent.vue";
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useDashboardStore } from '../stores/dashboardStore';
 
 const dashboardStore = useDashboardStore();
@@ -111,5 +111,7 @@ const dashboardStore = useDashboardStore();
 const loading = computed(() => dashboardStore.loading);
 const data = computed(() => dashboardStore.data);
 
-dashboardStore.getDashboardData();
+onMounted(() => {
+  dashboardStore.getDashboardData();
+})
 </script>

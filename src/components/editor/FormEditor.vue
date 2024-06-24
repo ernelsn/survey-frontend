@@ -14,10 +14,9 @@
       <label for="'question_text_' + model.data"
         class="block text-sm font-medium leading-6 text-gray-900">Question</label>
       <div class="mt-2">
-        <input type="text"
-          class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
-          :name="'question_text_' + model.data" v-model="model.question" @change="dataChange"
-          :id="'question_text_' + model.data">
+        <textarea :name="'question_text_' + model.data" :id="'question_text_' + model.data" v-model="model.question"
+          @change="dataChange"
+          class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
       </div>
     </div>
 
@@ -256,7 +255,7 @@ async function handleFilePondProcess(fieldName, file, metadata, load, error, pro
   try {
     const res = await uploadStore.processDescriptionAsImage(file);
     load(res.data);
-    emit('questionDescriptionAsImage', props.sectionIndex, props.questionIndex, res.data );
+    emit('questionDescriptionAsImage', props.sectionIndex, props.questionIndex, res.data);
   } catch (err) {
     console.error('Error occurred:', err);
     error('An error occurred');

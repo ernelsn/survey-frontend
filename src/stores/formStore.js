@@ -81,12 +81,11 @@ export const useFormStore = defineStore('form', {
         if (form.id) {
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
-          this.currentForm.loading = false;
         } else {
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
-          this.currentForm.loading = false;
         }
+        this.currentForm.loading = false;
         return response;
       } catch(error) {
         this.formErrors = handleErrors(error);
