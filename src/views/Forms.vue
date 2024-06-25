@@ -28,7 +28,8 @@
         <FormsLists v-for="(form, ind) in forms.data" :key="form.id" :form="form" class="opacity-0 animate-fade-in-down"
           :style="{ animationDelay: `${ind * 0.1}s` }" @delete="showDeleteDialog" />
 
-        <DeleteFormDialog :isOpened="showDelete" @toggle="(value) => showDelete = value" :on-delete="performDelete" />
+        <DeleteFormDialog :isOpened="showDelete" @toggle="(value) => showDelete = value" :on-delete="performDelete"
+          :title="dialogTitle" :message="dialogMessage" />
       </div>
       <div class="flex justify-center mt-5 border-t border-gray-200 ">
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm mt-5" aria-label="Pagination">
@@ -66,6 +67,9 @@ const selectedForm = ref(null);
 const formStore = useFormStore();
 const dashboardStore = useDashboardStore();
 
+const dialogTitle = computed(() => 'Delete Form');
+const dialogMessage = computed(() => 'Are you sure you want to delete this form? All of the data pertaining to this form will be permanently removed. This action cannot be undone.');
+
 const forms = computed(() => formStore.forms);
 
 formStore.getForms();
@@ -77,13 +81,13 @@ function showDeleteDialog(id) {
 
 async function performDelete() {
   await formStore.destroyForm(selectedForm.value);
-  await formStore.getForms();
-  showDelete.value = false;
   dashboardStore.notify({
     intent: 'info',
     title: `Form deleted`,
     message: `The form was successfully deleted`
   });
+  showDelete.value = false;
+  await formStore.getForms();
 }
 
 function pagination(ev, link) {

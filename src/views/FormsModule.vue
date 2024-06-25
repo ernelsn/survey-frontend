@@ -20,7 +20,7 @@
           </span>
 
           <span class="ml-3 sm:ml-3">
-            <button v-if="route.params.id" type="button" @click="isOpened = true" class="btn btn-error">
+            <button v-if="route.params.id" type="button" @click="openDeleteFormDialog" class="btn btn-error">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
                 <path fill-rule="evenodd"
                   d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
@@ -30,7 +30,8 @@
             </button>
           </span>
 
-          <DeleteFormDialog :is-opened="isOpened" @toggle="(value) => isOpened = value" :on-delete="performDelete" />
+          <DeleteFormDialog :is-opened="deleteDialogState.isOpen" @toggle="(value) => deleteDialogState.isOpen = value"
+            :on-delete="performDelete" :title="dialogTitle" :message="dialogMessage" />
         </div>
       </div>
     </template>
@@ -176,7 +177,8 @@
 
             <div v-for="(section, sectionIndex) in model.sections" :key="sectionIndex" class="mt-2">
               <div class="relative card bg-base-100 shadow-xl">
-                <div class="absolute top-0 left-0 bg-slate-800 text-white text-sm py-1 px-3 rounded-tl-lg rounded-br-lg">
+                <div
+                  class="absolute top-0 left-0 bg-slate-800 text-white text-sm py-1 px-3 rounded-tl-lg rounded-br-lg">
                   Section {{ sectionIndex + 1 }}
                 </div>
                 <div class="card-body">
@@ -191,8 +193,8 @@
                   </div>
                   <div class="mt-2">
                     <input type="text" name="title" id="title" v-model="section.title"
-                      class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" 
-                      placeholder="Title (optional)"/>
+                      class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+                      placeholder="Title (optional)" />
                   </div>
                   <div class="col-span-full">
                     <textarea v-model="section.description"
@@ -291,8 +293,24 @@ const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
 const uploadStore = useUploadStore();
 
-const isOpened = ref(false);
-const referenceBtn = ref({})
+const referenceBtn = ref({});
+const deleteDialogState = ref({
+  isOpen: false,
+  type: null,
+  sectionIndex: null
+});
+
+const dialogTitle = computed(() => {
+  return deleteDialogState.value.type === 'form' ? 'Delete Form' : 'Delete questions and sections?';
+});
+
+const dialogMessage = computed(() => {
+  if (deleteDialogState.value.type === 'form') {
+    return 'Are you sure you want to delete this form? All of the data pertaining to this form will be permanently removed. This action cannot be undone.';
+  } else {
+    return 'Deleting a section also deletes the question and responses it contains. This action cannot be undone.';
+  }
+})
 
 const formLoading = computed(() => formStore.currentForm.loading);
 
@@ -370,7 +388,19 @@ function addSection() {
 }
 
 function removeSection(sectionIndex) {
-  model.value.sections.splice(sectionIndex, 1);
+  deleteDialogState.value = {
+    isOpen: true,
+    type: 'section',
+    sectionIndex: sectionIndex
+  };
+}
+
+function openDeleteFormDialog() {
+  deleteDialogState.value = {
+    isOpen: true,
+    type: 'form',
+    sectionIndex: null
+  };
 }
 
 function addQuestion(index, sectionIndex) {
@@ -454,16 +484,30 @@ const storeForm = async () => {
 }
 
 function performDelete() {
-  formStore.destroyForm(model.value.id).then(() => {
-    router.push({
-      name: "Forms",
+  if (deleteDialogState.value.type === 'form') {
+    formStore.destroyForm(model.value.id).then(() => {
+      router.push({
+        name: "Forms",
+      });
+      dashboardStore.notify({
+        intent: 'success',
+        title: `Form deleted`,
+        message: `The form was successfully deleted`
+      });
     });
-    dashboardStore.notify({
-      intent: 'success',
-      title: `Form deleted`,
-      message: `The form was successfully deleted`
-    });
-  });
+  } else if (deleteDialogState.value.type === 'section') {
+    const sectionIndex = deleteDialogState.value.sectionIndex;
+    if (sectionIndex !== null) {
+      model.value.sections.splice(sectionIndex, 1);
+    }
+  }
+
+  // Reset the dialog state
+  deleteDialogState.value = {
+    isOpen: false,
+    type: null,
+    sectionIndex: null
+  };
 }
 
 function questionDescriptionAsImage(sectionIndex, questionIndex, description) {
@@ -475,7 +519,6 @@ async function handleFilePondProcess(fieldName, file, metadata, load, error, pro
     const res = await uploadStore.processImage(file);
     load(res.data);
     model.value.image = res.data;
-    console.log(res.data);
   } catch (err) {
     error('An error occurred');
   }
@@ -499,7 +542,9 @@ watch(model, () => {
   draftStore.setFormTitle(model.value.title);
   clearTimeout(timeout);
   timeout = setTimeout(() => {
-    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified' && model.value.title != null) {
+    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified'
+      && model.value.title != null
+      && model.value.title != '') {
       draftStore.saveAsDraft(model.value);
       dashboardStore.notify({
         intent: 'info',
