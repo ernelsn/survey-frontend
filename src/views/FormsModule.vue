@@ -72,7 +72,7 @@
                 </div>
                 <div class="mt-2">
                   <module-file-pond name="image" id="image" ref="form-module-pond" class-name="form-module-pond"
-                    label-idle="Drop files here..." credits="false" allow-multiple="true"
+                    label-idle="Drop files here..." credits="false"
                     accepted-file-types="image/jpeg, image/png" :server="{
                       url: '',
                       process: handleFilePondProcess,

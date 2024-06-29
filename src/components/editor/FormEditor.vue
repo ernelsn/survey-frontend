@@ -67,7 +67,7 @@
 
         <editor-file-pond v-if="showFilePond" :name="'question_description_' + model.id" v-model="model.description"
           @change="dataChange" id="description" ref="form-editor-pond" class-name="form-editor-pond"
-          label-idle="Drop files here..." credits="false" allow-multiple="true"
+          label-idle="Drop files here..." credits="false"
           accepted-file-types="image/jpeg, image/png" :server="{
             url: '',
             process: handleFilePondProcess,
