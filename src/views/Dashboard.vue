@@ -22,7 +22,8 @@
       <div class="row-span-2 animate-fade-in-down order-3 lg:order-1 bg-white shadow-md p-4">
         <h3 class="text-2xl font-semibold">Latest Form</h3>
         <div v-if="data.latestForm">
-          <img :src="data.latestForm.image_url" class="w-[240px] mx-auto" alt="" />
+          <ImageElement :webp-src="data.latestForm.image_webp_url" :fallback-src="data.latestForm.image_url"
+            :alt="data.latestForm.title" class="w-[240px] mx-auto" />
           <h3 class="font-bold text-xl mb-3">{{ data.latestForm.title }}</h3>
           <div class="flex justify-between text-sm mb-1">
             <div>Create Date:</div>
@@ -103,6 +104,7 @@
 
 <script setup>
 import PageComponent from "../components/PageComponent.vue";
+import ImageElement from "../components/ImageElement.vue";
 import { computed, onMounted } from "vue";
 import { useDashboardStore } from '../stores/dashboardStore';
 

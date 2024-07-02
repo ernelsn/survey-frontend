@@ -54,11 +54,12 @@
       </label>
       <div v-if="model.description_url && !showTextarea"
         class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
-        <img v-if="model.description_url" :src="model.description_url" v-fullscreen-image="{
-          imageUrl: model.description_url,
-          withDownload: false,
-          animation: 'fade',
-        }" class="h-full w-full object-cover object-center">
+        <ImageElement v-if="model.description_webp_url || model.description_url" :webp-src="model.description_webp_url"
+          :fallback-src="model.description_url" class="h-full w-full object-cover object-center" v-fullscreen-image="{
+            imageUrl: model.description_webp_url,
+            withDownload: false,
+            animation: 'fade',
+          }" />
       </div>
       <div class="mt-2 col-span-full">
         <textarea v-if="showTextarea" :name="'question_description_' + model.id" v-model="model.description"
@@ -67,8 +68,7 @@
 
         <editor-file-pond v-if="showFilePond" :name="'question_description_' + model.id" v-model="model.description"
           @change="dataChange" id="description" ref="form-editor-pond" class-name="form-editor-pond"
-          label-idle="Drop files here..." credits="false"
-          accepted-file-types="image/jpeg, image/png" :server="{
+          label-idle="Drop files here..." credits="false" accepted-file-types="image/jpeg, image/png" :server="{
             url: '',
             process: handleFilePondProcess,
             revert: handleFilePondRevert,
@@ -146,6 +146,8 @@ import { v4 as uuidv4 } from "uuid";
 import { computed, ref } from "vue";
 import { useFormStore } from "../../stores/formStore";
 import { useUploadStore } from "../../stores/uploadStore";
+
+import ImageElement from "../ImageElement.vue";
 
 import vueFilePond from 'vue-filepond';
 

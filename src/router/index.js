@@ -43,7 +43,7 @@ const routes = [
       const formStore = useFormStore();
       try {
         const response = await formStore.getFormBySlug(to.params.slug);
-        if (response.data.status === 0) {
+        if (response.data.is_published === 0) {
           to.matched[0].components.default = NotFound;
           next();
         } else {

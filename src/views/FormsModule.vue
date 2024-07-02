@@ -62,18 +62,18 @@
             <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div class="col-span-full group relative">
                 <label for="image" class="block text-sm font-medium leading-6 text-gray-900">Image</label>
-                <div v-if="model.image_url"
+                <div
                   class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
-                  <img v-if="model.image_url" :src="model.image_url" :alt="model.title" v-fullscreen-image="{
-                    imageUrl: model.image_url,
-                    withDownload: false,
-                    animation: 'fade',
-                  }" class="h-full w-full object-cover object-center">
+                  <ImageElement :webp-src="model.image_webp_url" :fallback-src="model.image_url" :alt="model.title"
+                    class="h-full w-full object-cover object-center" v-fullscreen-image="{
+                      imageUrl: model.image_webp_url,
+                      withDownload: false,
+                      animation: 'fade',
+                    }" />
                 </div>
                 <div class="mt-2">
                   <module-file-pond name="image" id="image" ref="form-module-pond" class-name="form-module-pond"
-                    label-idle="Drop files here..." credits="false"
-                    accepted-file-types="image/jpeg, image/png" :server="{
+                    label-idle="Drop files here..." credits="false" accepted-file-types="image/jpeg, image/png" :server="{
                       url: '',
                       process: handleFilePondProcess,
                       revert: handleFilePondRevert,
@@ -275,6 +275,7 @@ import { useUploadStore } from "../stores/uploadStore";
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
+import ImageElement from "../components/ImageElement.vue";
 
 import vueFilePond from 'vue-filepond';
 
