@@ -62,7 +62,7 @@
             <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div class="col-span-full group relative">
                 <label for="image" class="block text-sm font-medium leading-6 text-gray-900">Image</label>
-                <div
+                <div v-if="model.image_webp_url || model.image_url"
                   class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
                   <ImageElement :webp-src="model.image_webp_url" :fallback-src="model.image_url" :alt="model.title"
                     class="h-full w-full object-cover object-center" v-fullscreen-image="{

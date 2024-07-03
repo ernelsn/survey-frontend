@@ -8,11 +8,13 @@
         <div class="label">
           <div v-if="question.description_url"
             class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
-            <img v-if="question.description_url" :src="question.description_url" v-fullscreen-image="{
-              imageUrl: question.description_url,
-              withDownload: false,
-              animation: 'fade',
-            }" class="h-full w-full object-cover object-center">
+            <ImageElement v-if="question.description_webp_url || question.description_url"
+              :webp-src="question.description_webp_url" :fallback-src="question.description_url"
+              class="h-full w-full object-cover object-center" v-fullscreen-image="{
+                imageUrl: question.description_webp_url,
+                withDownload: false,
+                animation: 'fade',
+              }" />
           </div>
           <span class="label-text text-gray-500 text-sm">{{ question.description }}</span>
         </div>
@@ -54,8 +56,8 @@
           <div class="flex justify-between w-full mb-2">
             <label v-for="(value, index) in generateValues(option.from_option, option.to_option)"
               :key="`${option.uuid}-${index}`" class="inline-flex items-center cursor-pointer">
-              <input type="radio" :name="'question' + question.id" :value="value"
-                class="radio" @change="emits('update:modelValue', $event.target.value)" />
+              <input type="radio" :name="'question' + question.id" :value="value" class="radio"
+                @change="emits('update:modelValue', $event.target.value)" />
               <span class="label-text ml-1">{{ value }}</span>
             </label>
           </div>
@@ -83,6 +85,7 @@
 
 <script setup>
 import { ref } from "vue";
+import ImageElement from "../ImageElement.vue";
 
 const { question, index, modelValue } = defineProps({
   question: Object,

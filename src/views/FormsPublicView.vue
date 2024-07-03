@@ -45,9 +45,10 @@
           <div class="grid items-center mb-5">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
-                <img :src="form.image_url" class="max-w-sm rounded-lg" height="280" width="200"
+                <ImageElement v-if="form.image_webp_url || form.image_url" :webp-src="form.image_webp_url"
+                  :fallback-src="form.image_url" :alt="form.title" class="max-w-sm rounded-lg" height="280" width="200"
                   v-fullscreen-image="{
-                    imageUrl: form.image_url,
+                    imageUrl: form.image_webp_url,
                     withDownload: false,
                     animation: 'fade',
                   }" />
@@ -118,6 +119,7 @@ import { useFormResponseStore } from "../stores/formResponseStore";
 
 import FormViewer from "../components/viewer/FormViewer.vue";
 import TimerExpiredDialog from "../components/TimerExpiredDialog.vue";
+import ImageElement from "../components/ImageElement.vue";
 
 const route = useRoute();
 const formStore = useFormStore();
