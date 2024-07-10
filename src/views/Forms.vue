@@ -25,11 +25,8 @@
 
     <div v-else-if="forms.data.length">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
-        <FormsLists v-for="(form, ind) in forms.data" :key="form.id" :form="form" class="opacity-0 animate-fade-in-down"
+        <FormContent v-for="(form, ind) in forms.data" :key="form.id" :form="form" class="opacity-0 animate-fade-in-down"
           :style="{ animationDelay: `${ind * 0.1}s` }" @delete="showDeleteDialog" />
-
-        <DeleteFormDialog :isOpened="showDelete" @toggle="(value) => showDelete = value" :on-delete="performDelete"
-          :title="dialogTitle" :message="dialogMessage" />
       </div>
       <div class="flex justify-center mt-5 border-t border-gray-200 ">
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm mt-5" aria-label="Pagination">
@@ -49,6 +46,9 @@
     <div v-else class="text-gray-600 text-center py-16">
       No forms has been created yet.
     </div>
+
+    <DeleteFormDialog :isOpened="showDelete" @toggle="(value) => showDelete = value" :on-delete="performDelete"
+      :title="dialogTitle" :message="dialogMessage" />
   </PageComponent>
 </template>
 
@@ -59,7 +59,7 @@ import { useDashboardStore } from '../stores/dashboardStore';
 
 import PageComponent from "../components/PageComponent.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
-import FormsLists from "../components/FormsLists.vue";
+import FormContent from "../components/FormContent.vue";
 
 const showDelete = ref(false);
 const selectedForm = ref(null);

@@ -7,9 +7,9 @@
         </div>
 
         <div v-else-if="formResponseStore.ended" class="text-center">
-          <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been submitted
+          <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been recorded
           </h1>
-          <p class="mt-6 text-base leading-7 text-gray-600">Thank you for participating in this event.</p>
+          <p class="mt-6 text-base leading-7 text-gray-600">Thank you for participating</p>
 
           <div v-if="form.show_results" class="mt-10 flex items-center justify-center gap-x-6 rounded-full">
             <div v-if="loadResult" class="flex justify-center">

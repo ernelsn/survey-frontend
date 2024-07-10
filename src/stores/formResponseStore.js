@@ -7,8 +7,9 @@ const formResponseService = new FormResponseService(axiosClient);
 export const useFormResponseStore = defineStore('response', {
   state: () => ({
     currentForm: {
-      data: {},
+      data: null,
       loading: false,
+      error: null,
     },
     results: {
       overall_results: {
@@ -24,14 +25,21 @@ export const useFormResponseStore = defineStore('response', {
     ended: false,
   }),
 
+  getters: {
+    formResponses: (state) => state.currentForm.data?.form_responses || [],
+    formResponsesCount: (state) => state.currentForm.data?.form_responses_count || 0
+  },
+
   actions: {
     async getFormResponse(id) {
       this.currentForm.loading = true;
+      this.currentForm.error = null;
       try {
         const response = await formResponseService.getFormResponse(id);
         this.currentForm.data = response.data;
       } catch (error) {
-        console.error('Error fetching results:', error);
+        console.error('Error fetching form response:', error);
+        this.currentForm.error = error.message || 'An error occurred while fetching the form response.';
       } finally {
         this.currentForm.loading = false;
       }
