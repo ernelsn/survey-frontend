@@ -111,7 +111,7 @@ const responseMessage = computed(() => {
 
 onMounted(async () => {
   await formResponseStore.getFormResponse(route.params.id);
-  isAccepting.value = formResponseStore.currentForm.data?.form_responses[0]?.is_accepting ?? false;
+  isAccepting.value = formResponseStore.currentForm.data?.is_accepting ?? false;
 });
 
 async function toggleAcceptance() {
@@ -122,7 +122,6 @@ async function toggleAcceptance() {
       isAccepting.value = response.is_accepting;
     }
   } catch (error) {
-    console.error('Error toggling acceptance:', error);
     isAccepting.value = !isAccepting.value;
   }
 }
