@@ -60,7 +60,6 @@ export const useFormResponseStore = defineStore('response', {
         this.loadResults = false;
       }
     },
-    
   },
   persist: {
     paths: ['endTime', 'started', 'ended', 'results'],

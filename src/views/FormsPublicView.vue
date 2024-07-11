@@ -6,6 +6,15 @@
           <span class="loading loading-dots loading-lg mr-1"></span>
         </div>
 
+        <div v-else-if="!form.accept_response">
+          <h1 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">{{ form.title }}
+          </h1>
+          <p class="mt-6 text-base leading-7 text-gray-600">The form {{ form.title }} is no
+            longer accepting responses. <br> Try contacting the owner of the form if you think this is a
+            mistake.
+          </p>
+        </div>
+
         <div v-else-if="formResponseStore.ended" class="text-center">
           <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Your response has been recorded
           </h1>

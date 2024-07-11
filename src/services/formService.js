@@ -15,14 +15,6 @@ class FormService {
     return await this.client.get(`/api/v1/forms/${slug}/public`);
   }
 
-  // async createForm(form) {
-  //   return await this.client.post("/api/v1/forms", form);
-  // }
-
-  // async updateForm(form) {
-  //   return await this.client.put(`/api/v1/forms/${form.id}`, form);
-  // }
-
   async storeForm(form) {
     if (form.id) {
       return await this.client.patch(`/api/v1/forms/${form.id}`, form);
@@ -35,6 +27,10 @@ class FormService {
     return await this.client.post(`/api/v1/forms/${formId}/responses`, {
       responses,
     });
+  }
+
+  async updateFormResponseAcceptance(id) {
+    return await this.client.patch(`/api/v1/forms/${id}/response-acceptance`, id);
   }
 
   async destroyForm(id) {

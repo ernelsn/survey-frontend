@@ -92,6 +92,16 @@ export const useFormStore = defineStore('form', {
       }
     },
 
+    async updateFormResponseAcceptance(id) {
+      try {
+        const response = await formService.updateFormResponseAcceptance(id);
+        return response.data
+      } catch (error) {
+        console.error('Error updating form response acceptance:', error)
+        throw error
+      }
+    },
+
     async destroyForm(id) {
       const response = await formService.destroyForm(id);
       await this.getForms();

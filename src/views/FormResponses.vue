@@ -16,9 +16,11 @@
                                 {{ responseMessage }}
                             </h2>
                         </div>
-                        <div class="mt-5 flex lg:ml-4 lg:mt-0">
-                            <span class="hidden sm:block">
-                                <input type="checkbox" class="peer sr-only opacity-0" id="toggle" />
+                        <div class="mt-5 flex items-center lg:ml-4 lg:mt-0">
+                            <span class="mr-3">{{ isAccepting ? 'Accepting responses' : 'No longer accepting responses' }}</span>
+                            <span class="sm:block">
+                                <input type="checkbox" class="peer sr-only opacity-0" id="toggle"
+                                    @change="toggleAcceptance" :checked="isAccepting" />
                                 <label for="toggle"
                                     class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
                                     <span class="sr-only">Enable</span>
@@ -84,27 +86,44 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useFormResponseStore } from '../stores/formResponseStore';
+import { useFormStore } from "../stores/formStore";
 import PageComponent from "../components/PageComponent.vue";
 
 const route = useRoute();
 const formResponseStore = useFormResponseStore();
-
+const formStore = useFormStore();
 const loading = computed(() => formResponseStore.currentForm.loading);
 const formResponses = computed(() => formResponseStore.formResponses);
 const formResponsesCount = computed(() => formResponseStore.formResponsesCount);
 
+const isAccepting = ref(false);
+
 const responseMessage = computed(() => {
-  if (formResponsesCount.value === 0) {
-    return 'No response has been made yet';
-  }
-  const text = formResponsesCount.value === 1 ? 'response' : 'responses';
-  return `${formResponsesCount.value} ${text}`;
+    if (formResponsesCount.value === 0) {
+        return 'No response has been made yet';
+    }
+    const text = formResponsesCount.value === 1 ? 'response' : 'responses';
+    return `${formResponsesCount.value} ${text}`;
 });
 
-onMounted(() => {
-    formResponseStore.getFormResponse(route.params.id);
+onMounted(async () => {
+  await formResponseStore.getFormResponse(route.params.id);
+  isAccepting.value = formResponseStore.currentForm.data?.form_responses[0]?.is_accepting ?? false;
 });
+
+async function toggleAcceptance() {
+  try {
+    isAccepting.value = !isAccepting.value;
+    const response = await formStore.updateFormResponseAcceptance(route.params.id);
+    if (response && typeof response.is_accepting !== 'undefined') {
+      isAccepting.value = response.is_accepting;
+    }
+  } catch (error) {
+    console.error('Error toggling acceptance:', error);
+    isAccepting.value = !isAccepting.value;
+  }
+}
 </script>
