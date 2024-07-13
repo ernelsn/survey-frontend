@@ -8,7 +8,8 @@
         </div>
         <div class="mt-5 flex lg:ml-4 lg:mt-0" v-if="route.params.id">
           <span class="sm:ml-3" v-if="model.slug">
-            <router-link :to="{ name: 'FormsPublicView', params: { slug: model.slug } }" target="_blank" class="btn btn-ghost">
+            <router-link :to="{ name: 'FormsPublicView', params: { slug: model.slug } }" target="_blank"
+              class="btn btn-ghost">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
                 <path
                   d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
@@ -113,39 +114,24 @@
                     class="textarea textarea-bordered h-24 w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
               </div>
-
-              <div class="sm:col-span-3">
-                <label for="expire_date" class="block text-sm font-medium leading-6 text-gray-900">Expire Date</label>
-                <div class="mt-2">
-                  <input type="date" name="expire_date" id="expire_date" v-model="model.expire_date" :min="minDate"
-                    class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
-                </div>
-              </div>
-
-              <div class="sm:col-span-3">
-                <label for="last-name" class="block text-sm font-medium leading-6 text-gray-900">Time limit (time in
-                  minutes)</label>
-                <div class="mt-2">
-                  <input type="number" name="time_limit" id="time_limit" v-model="model.time_limit"
-                    class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
-                    placeholder="Please input time in minutes" min="0"
-                    @input="model.time_limit = Math.max(0, model.time_limit)" />
-                </div>
-              </div>
             </div>
           </div>
 
           <div class="border-b border-gray-900/10 pb-12">
             <h1 class="text-base font-semibold leading-7 text-gray-900">Settings</h1>
-            <div class="mt-10 space-y-10">
-              <fieldset>
-                <legend class="text-sm font-semibold leading-6 text-gray-900">Display</legend>
+            <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+              <fieldset class="sm:col-span-3">
+                <legend class="text-sm font-semibold leading-6 text-gray-900">Presentation</legend>
                 <div class="mt-6 space-y-6">
                   <div class="relative flex gap-x-3">
-                    <div class="flex h-6 items-center">
-                      <input id="is_published" name="is_published" type="checkbox" v-model="model.is_published"
-                        class="checkbox" />
-                    </div>
+                    <span class="sm:block">
+                      <input type="checkbox" class="peer sr-only opacity-0" id="is_published" name="is_published"
+                        v-model="model.is_published" @change="toggleIsPublish" />
+                      <label for="is_published"
+                        class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
+                        <span class="sr-only">Enable</span>
+                      </label>
+                    </span>
                     <div class="text-sm leading-6">
                       <label for="comments" class="font-medium text-gray-900">Publish</label>
                       <p class="text-gray-500">This configuration determines the publication status of the forms
@@ -154,16 +140,14 @@
                     </div>
                   </div>
 
-                  <div class="relative flex gap-x-3">
-                    <div class="flex h-6 items-center">
-                      <input id="show_results" name="show_results" type="checkbox" v-model="model.show_results"
-                        class="checkbox" />
+                  <div v-if="model.is_published" class="relative grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                    <div class="text-sm leading-6 sm:col-span-4 sm:col-start-1">
+                      <label for="expire_date" class="font-medium text-gray-900">Expiration date (Optional)</label>
+                      <p class="text-gray-500">Set expiration date for the current form</p>
                     </div>
-                    <div class="text-sm leading-6">
-                      <label for="comments" class="font-medium text-gray-900">Show results</label>
-                      <p class="text-gray-500">This configuration determines whether the score will be shown after the
-                        forms.
-                      </p>
+                    <div class="flex h-6 items-center sm:col-span-2">
+                      <input type="date" name="expire_date" id="expire_date" v-model="model.expire_date" :min="minDate"
+                        class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                     </div>
                   </div>
 
@@ -177,6 +161,67 @@
                       <p class="text-gray-500">This configuration determines whether to allow multiple attempts or
                         retakes.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset class="sm:col-span-3">
+                <legend class="text-sm font-semibold leading-6 text-gray-900">Quiz</legend>
+                <div class="mt-6 space-y-6">
+                  <div class="relative flex gap-x-3">
+                    <span class="sm:block">
+                      <input type="checkbox" class="peer sr-only opacity-0" id="is_quiz" name="is_quiz"
+                        v-model="model.is_quiz" @change="toggleIsQuiz" />
+                      <label for="is_quiz"
+                        class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
+                        <span class="sr-only">Enable</span>
+                      </label>
+                    </span>
+                    <div class="text-sm leading-6">
+                      <span class="ml-3 font-medium text-gray-900 text-sm leading-6">Make this as a quiz</span>
+                      <p class="text-gray-500 ml-3">Assign point values, set time limit, and automatically provide
+                        feedback
+                      </p>
+                    </div>
+                  </div>
+
+                  <div v-if="model.is_quiz" class="mt-6 space-y-6">
+                    <div class="relative flex gap-x-3">
+                      <div class="flex h-6 items-center">
+                        <input id="show_results" name="show_results" type="checkbox" v-model="model.show_results"
+                          class="checkbox" />
+                      </div>
+                      <div class="text-sm leading-6">
+                        <label for="comments" class="font-medium text-gray-900">Show results</label>
+                        <p class="text-gray-500">This configuration determines whether the score will be shown
+                          immediately after the forms has been submitted.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="relative grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                      <div class="text-sm leading-6 sm:col-span-4 sm:col-start-1">
+                        <label for="comments" class="font-medium text-gray-900">Default question point value</label>
+                        <p class="text-gray-500">Point values for every new question</p>
+                      </div>
+                      <div class="flex h-6 items-center sm:col-span-2">
+                        <div class="flex h-6 items-center sm:col-span-2">
+                          <input id="default_points" name="default_points" type="number" v-model="model.default_points"
+                            class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+                            min="0" placeholder="0" @input="handleDefaultPointsInput" />
+                        </div>
+                      </div>
+
+                      <div class="text-sm leading-6 sm:col-span-4 sm:col-start-1">
+                        <label for="comments" class="font-medium text-gray-900">Time limit</label>
+                        <p class="text-gray-500">Set time limit in minutes</p>
+                      </div>
+                      <div class="flex h-6 items-center sm:col-span-2">
+                        <input type="number" name="time_limit" id="time_limit" v-model="model.time_limit"
+                          class="input input-bordered input-sm w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
+                          placeholder="0" min="0" @input="model.time_limit = Math.max(0, model.time_limit)" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -279,21 +324,24 @@ import { v4 as uuidv4 } from "uuid";
 import { computed, ref, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
+// Stores
 import { useFormStore } from "../stores/formStore";
 import { useDashboardStore } from '../stores/dashboardStore';
 import { useDraftStore } from "../stores/draftStore";
 import { useUploadStore } from "../stores/uploadStore";
 
+// Components
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
 import ImageElement from "../components/ImageElement.vue";
 
+// Plugins
 import vueFilePond from 'vue-filepond';
-
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 
+// Styles
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
@@ -306,6 +354,8 @@ const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
 const uploadStore = useUploadStore();
 
+const isQuiz = ref(false);
+const isPublish = ref(false);
 const referenceBtn = ref({});
 const deleteDialogState = ref({
   isOpen: false,
@@ -313,57 +363,51 @@ const deleteDialogState = ref({
   sectionIndex: null
 });
 
-const dialogTitle = computed(() => {
-  return deleteDialogState.value.type === 'form' ? 'Delete Form' : 'Delete questions and sections?';
-});
-
+const dialogTitle = computed(() => deleteDialogState.value.type === 'form' ? 'Delete Form' : 'Delete questions and sections?');
 const dialogMessage = computed(() => {
-  if (deleteDialogState.value.type === 'form') {
-    return 'Are you sure you want to delete this form? All of the data pertaining to this form will be permanently removed. This action cannot be undone.';
-  } else {
-    return 'Deleting a section also deletes the question and responses it contains. This action cannot be undone.';
-  }
-})
+  return deleteDialogState.value.type === 'form'
+    ? 'Are you sure you want to delete this form? All of the data pertaining to this form will be permanently removed. This action cannot be undone.'
+    : 'Deleting a section also deletes the question and responses it contains. This action cannot be undone.';
+});
 
 const formLoading = computed(() => formStore.currentForm.loading);
+const minDate = computed(() => new Date().toISOString().slice(0, 10));
 
-const minDate = computed(() => {
-  return new Date().toISOString().slice(0, 10);
-});
+const handleDefaultPointsInput = (event) => {
+  const newDefaultPoints = parseInt(event.target.value, 10);
+  if (isNaN(newDefaultPoints)) {
+    model.value.default_points = null;
+  } else {
+    model.value.default_points = Math.max(0, newDefaultPoints);
+  }
+  updateQuestionsWithDefaultPoints();
+};
 
-const hasDraft = computed(() => {
-  const keys = Object.keys(localStorage);
-  return keys.some(key => key.endsWith('_form'));
-});
-
-const allDrafts = computed(() => {
-  return Object.keys(localStorage).filter(key => key.endsWith('_form'));
-});
-
+const hasDraft = computed(() => Object.keys(localStorage).some(key => key.endsWith('_form')));
+const allDrafts = computed(() => Object.keys(localStorage).filter(key => key.endsWith('_form')));
 const currentFormDraft = computed(() => {
   const formTitle = model.value.title.toLowerCase() + '_form';
-  if (model.value.title) {
-    return Object.keys(localStorage).filter(key => key.toLowerCase() === formTitle);
-  } else {
-    return allDrafts.value;
-  }
+  return model.value.title
+    ? Object.keys(localStorage).filter(key => key.toLowerCase() === formTitle)
+    : allDrafts.value;
 });
 
 if (route.params.id) {
   formStore.getForm(route.params.id);
 }
 
-// Create empty forms
-let model = ref({
+const model = ref({
   title: "",
   slug: "",
   description: null,
   image: [],
-  expire_date: null,
-  time_limit: null,
   is_published: false,
-  show_results: false,
+  expire_date: null,
   multiple_attempts: false,
+  is_quiz: false,
+  show_results: false,
+  time_limit: null,
+  default_points: null,
   sections: [{
     title: "",
     description: "",
@@ -371,137 +415,144 @@ let model = ref({
   }],
 });
 
-// Watch current form data change and when this happens we update local model
-watch(
-  () => formStore.currentForm.data,
-  (newVal, oldVal) => {
+watch(() => formStore.currentForm.data, (newVal) => {
+  if (newVal) {
     model.value = {
       ...newVal,
       is_published: !!newVal.is_published,
+      is_quiz: !!newVal.is_quiz,
       show_results: !!newVal.show_results,
       multiple_attempts: !!newVal.multiple_attempts,
-      sections: newVal.sections ? newVal.sections.map(section => ({
+      sections: newVal.sections?.map(section => ({
         id: section.id,
         title: section.title,
         description: section.description,
         questions: section.questions || [],
-      })) : [],
+      })) || [],
     };
-  },
-  { deep: true }
-);
+  }
+}, { deep: true });
 
-function addSection() {
-  const newSection = {
+const addSection = () => {
+  model.value.sections.push({
     title: "",
     description: "",
     questions: [],
-  };
-  model.value.sections.push(newSection);
-}
+  });
+};
 
-function removeSection(sectionIndex) {
+const removeSection = (sectionIndex) => {
   deleteDialogState.value = {
     isOpen: true,
     type: 'section',
     sectionIndex: sectionIndex
   };
-}
+};
 
-function openDeleteFormDialog() {
+const openDeleteFormDialog = () => {
   deleteDialogState.value = {
     isOpen: true,
     type: 'form',
     sectionIndex: null
   };
-}
+};
 
-function addQuestion(index, sectionIndex) {
+const addQuestion = (index, sectionIndex) => {
   const newQuestion = {
     id: uuidv4(),
     type: "text",
     question: "",
     description: null,
     data: {},
+    points: model.value.points || null
   };
   model.value.sections[sectionIndex].questions.splice(index, 0, newQuestion);
 
   nextTick(() => {
     scrollToReference(sectionIndex);
   });
-}
+};
 
-function questionChange(question, sectionIndex, questionIndex) {
+const questionChange = (question, sectionIndex, questionIndex) => {
   if (question.data.options) {
     question.data.options = [...question.data.options];
   }
-
-  const newQuestions = model.value.sections[sectionIndex].questions.map((q, index) => {
-    if (index === questionIndex) {
-      return { ...question };
-    }
-    return q;
-  });
-
-  model.value.sections[sectionIndex].questions = newQuestions;
-}
-
-function deleteQuestion(sectionIndex, questionIndex) {
-  model.value.sections[sectionIndex].questions = model.value.sections[sectionIndex].questions.filter((q, index) => index !== questionIndex);
-}
-
-// Create or update forms
-const storeForm = async () => {
-  let action = "Created";
-  if (model.value.id) {
-    action = "Updated";
+  if (question.points === undefined || question.points === null) {
+    question.points = model.value.points || null;
   }
+  model.value.sections[sectionIndex].questions = model.value.sections[sectionIndex].questions.map((q, index) =>
+    index === questionIndex ? { ...question } : q
+  );
+};
 
-  const sectionsData = model.value.sections.map(section => {
-    const sectionData = {
-      ...section,
-      id: section.id
-    };
-    return sectionData;
+const deleteQuestion = (sectionIndex, questionIndex) => {
+  model.value.sections[sectionIndex].questions = model.value.sections[sectionIndex].questions.filter((_, index) => index !== questionIndex);
+};
+
+const updateQuestionsWithDefaultPoints = () => {
+  model.value.sections.forEach(section => {
+    section.questions.forEach(question => {
+      if (question.points === null || question.points === undefined) {
+        question.points = model.value.default_points;
+      }
+    });
   });
+};
 
-  const formData = {
-    ...model.value,
-    sections: sectionsData
+watch(() => model.value.default_points, updateQuestionsWithDefaultPoints);
+
+const storeForm = async () => {
+  const action = model.value.id ? "Updated" : "Created";
+  const sectionsData = model.value.sections.map(section => ({
+    ...section,
+    id: section.id,
+    questions: section.questions.map(question => ({
+      ...question,
+      points: model.value.is_quiz 
+        ? (question.points !== model.value.default_points ? model.value.default_points : question.points)
+        : null,
+      data: question.data || null,
+      description: question.description || null
+    }))
+  }));
+
+  const formData = { 
+    ...model.value, 
+    sections: sectionsData,
+    default_points: model.value.is_quiz ? model.value.default_points : null,
   };
 
   const response = await formStore.storeForm(formData);
-  if (response && response.data) {
-    const data = response.data;
+  if (response?.data) {
+    const { data } = response.data;
     dashboardStore.notify({
       intent: 'success',
       title: `${action}`,
       message: `The form was successfully ${action.toLowerCase().trim()}`
     });
-    router.push({
-      name: "FormsModule",
-      params: { id: data.data.id },
-    });
-    draftStore.setFormState('submitted')
+    router.push({ name: "FormsModule", params: { id: data.id } });
+    draftStore.setFormState('submitted');
     draftStore.clearDraft(model.value.title);
 
-    if (data.data.sections) {
-      model.value.sections = data.data.sections.map(section => ({
+    if (data.sections) {
+      model.value.sections = data.sections.map(section => ({
         id: section.id,
         title: section.title,
         description: section.description,
-        questions: section.questions || [],
+        questions: (section.questions || []).map(question => ({
+          ...question,
+          points: model.value.is_quiz ? (question.points || data.default_points) : null
+        })),
       }));
     }
+    model.value.default_points = data.default_points;
   }
-}
+};
 
-function performDelete() {
+const performDelete = () => {
   if (deleteDialogState.value.type === 'form') {
     formStore.destroyForm(model.value.id).then(() => {
-      router.push({
-        name: "Forms",
-      });
+      router.push({ name: "Forms" });
       dashboardStore.notify({
         intent: 'success',
         title: `Form deleted`,
@@ -509,25 +560,20 @@ function performDelete() {
       });
     });
   } else if (deleteDialogState.value.type === 'section') {
-    const sectionIndex = deleteDialogState.value.sectionIndex;
+    const { sectionIndex } = deleteDialogState.value;
     if (sectionIndex !== null) {
       model.value.sections.splice(sectionIndex, 1);
     }
   }
 
-  // Reset the dialog state
-  deleteDialogState.value = {
-    isOpen: false,
-    type: null,
-    sectionIndex: null
-  };
-}
+  deleteDialogState.value = { isOpen: false, type: null, sectionIndex: null };
+};
 
-function questionDescriptionAsImage(sectionIndex, questionIndex, description) {
+const questionDescriptionAsImage = (sectionIndex, questionIndex, description) => {
   model.value.sections[sectionIndex].questions[questionIndex].description = description;
-}
+};
 
-async function handleFilePondProcess(fieldName, file, metadata, load, error, progress, abort) {
+const handleFilePondProcess = async (fieldName, file, metadata, load, error, progress, abort) => {
   try {
     const res = await uploadStore.processImage(file);
     load(res.data);
@@ -535,20 +581,20 @@ async function handleFilePondProcess(fieldName, file, metadata, load, error, pro
   } catch (err) {
     error('An error occurred');
   }
-}
+};
 
-async function handleFilePondRevert(uniqueFileId, load, error) {
+const handleFilePondRevert = async (uniqueFileId, load, error) => {
   try {
     await uploadStore.revert(uniqueFileId);
     load();
   } catch (err) {
     error('An error occurred');
   }
-}
+};
 
-function fieldUpdate() {
+const fieldUpdate = () => {
   draftStore.setFormState('modified');
-}
+};
 
 let timeout;
 watch(model, () => {
@@ -556,8 +602,7 @@ watch(model, () => {
   clearTimeout(timeout);
   timeout = setTimeout(() => {
     if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified'
-      && model.value.title != null
-      && model.value.title != '') {
+      && model.value.title != null && model.value.title !== '') {
       draftStore.saveAsDraft(model.value);
       dashboardStore.notify({
         intent: 'info',
@@ -568,7 +613,15 @@ watch(model, () => {
   }, 2000);
 }, { deep: true });
 
-async function loadDraft() {
+const toggleIsPublish = () => {
+  isPublish.value = model.value.is_published;
+};
+
+const toggleIsQuiz = () => {
+  isQuiz.value = model.value.is_quiz;
+};
+
+const loadDraft = async () => {
   draftStore.loadAsDraft();
   draftStore.setFormState('loaded');
   if (draftStore.data) {
@@ -579,13 +632,12 @@ async function loadDraft() {
       message: 'The draft was successfully loaded'
     });
   }
-}
+};
 
-function scrollToReference(sectionIndex) {
+const scrollToReference = (sectionIndex) => {
   const button = referenceBtn.value[sectionIndex];
   if (button) {
     button.scrollIntoView({ behavior: 'smooth' });
   }
-}
-
+};
 </script>
