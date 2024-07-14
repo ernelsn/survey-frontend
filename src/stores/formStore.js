@@ -4,14 +4,6 @@ import FormService from '../services/formService';
 
 const formService = new FormService(axiosClient);
 
-const handleErrors = (error) => {
-  if (error.response.status === 422) {
-    return error.response.data.errors || ["An error occurred while processing the request."];
-  }
-  
-  return ["An error occurred while processing the request."];
-}
-
 export const useFormStore = defineStore('form', {
   state: () => ({
     forms: {
@@ -22,25 +14,31 @@ export const useFormStore = defineStore('form', {
     currentForm: {
       data: {},
       loading: false,
+      sectionLoading: false,
     },
     questionCorrectOptions: {},
     questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
-    formErrors: [],
+    error: null,
   }),
 
-  getters: {
-    errors: (state) => state.formErrors,
-  },
-
   actions: {
+    setError(error) {
+      this.error = error;
+    },
+
+    clearError() {
+      this.error = null;
+    },
+
     async getForms(url = '/api/v1/forms') {
       this.forms.loading = true;
+      this.setError(null);
       try {
         const response = await formService.getForms(url);
         this.forms.data = response.data.data;
         this.forms.links = response.data.meta.links;
       } catch (err) {
-        this.error = err;
+        this.setError(handleErrors(err));
       } finally {
         this.forms.loading = false;
       }
@@ -48,47 +46,59 @@ export const useFormStore = defineStore('form', {
 
     async getForm(id) {
       this.currentForm.loading = true;
+      this.setError(null);
       try {
         const response = await formService.getForm(id);
         this.currentForm.data = response.data.data;
-        this.currentForm.loading = false;
-
         return response;
-      } catch (err) {
+      } catch (error) {
+        this.setError(error);
+        throw error;
+      } finally {
         this.currentForm.loading = false;
-        throw err;
       }
     },
 
     async getFormBySlug(slug) {
       this.currentForm.loading = true;
+      this.setError(null);
+      this.currentForm.data = { title: '' };
+    
       try {
         const response = await formService.getFormBySlug(slug);
         this.currentForm.data = response.data.data;
-        this.currentForm.loading = false;
-        
-        return response;
       } catch (err) {
+        if (err.response && err.response.data) {
+          this.setError(err.response.data.message);
+          this.currentForm.data.title = err.response.data.title;
+        } else if (err.request) {
+          this.setError('No response received from the server');
+        } else {
+          this.setError('An error occurred while setting up the request');
+        }
+      } finally {
         this.currentForm.loading = false;
-        throw err;
       }
     },
 
     async storeForm(form) {
-      this.currentForm.loading = true;
       let response;
       try {
         if (form.id) {
+          this.currentForm.sectionLoading = true;
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
         } else {
+          this.currentForm.loading = true;
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
         }
-        this.currentForm.loading = false;
         return response;
       } catch(error) {
-        this.formErrors = handleErrors(error);
+        this.setError(error);
+      } finally {
+        this.currentForm.loading = false;
+        this.currentForm.sectionLoading = false;
       }
     },
 

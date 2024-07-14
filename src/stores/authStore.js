@@ -1,39 +1,48 @@
 import { defineStore } from 'pinia';
-import axiosClient from "../axios";
-
-const handleErrors = (error) => {
-  if (error.response.status === 422) {
-    return error.response.data.errors || ["An error occurred while processing the request."];
-  }
-  
-  return ["An error occurred while processing the request."];
-}
+import axiosClient from '../axios';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     authUser: null,
     authStatus: null,
-    authErrors: [],
+    error: null,
     loading: false,
   }),
 
   getters: {
     user: (state) => state.authUser,
-    errors: (state) => state.authErrors,
     status: (state) => state.authStatus
   },
 
   actions: {
+    setError(error) {
+      this.error = error;
+    },
+
+    clearError() {
+      this.error = null;
+    },
+
     async getToken() {
-      await axiosClient.get(`/sanctum/csrf-cookie`);
+      try {
+        await axiosClient.get(`/sanctum/csrf-cookie`);
+      } catch (error) {
+        this.setError(error);
+      }
     },
+
     async fetchUser() {
-      await this.getToken();
-      const data = await axiosClient.get(`/api/user`);
-      this.authUser = data.data;
+      try {
+        await this.getToken();
+        const response = await axiosClient.get(`/api/user`);
+        this.authUser = response.data;
+      } catch (error) {
+        this.setError(error);
+      }
     },
+
     async register(user) {
-      this.authErrors = [];
+      this.clearError();
       this.loading = true;
 
       try {
@@ -45,69 +54,77 @@ export const useAuthStore = defineStore('auth', {
           password_confirmation: user.password_confirmation
         });
         this.router.push({ name: "Login" });
-        this.loading = false;
       } catch (error) {
-        this.authErrors = handleErrors(error);
+        this.setError(error);
+      } finally {
         this.loading = false;
       }
     },
+
     async login(user) {
-      this.authErrors = [];
+      this.clearError();
       this.loading = true;
 
       try {
         await this.getToken();
-        await axiosClient.post(`/login`, {
+        const response = await axiosClient.post(`/login`, {
           email: user.email,
           password: user.password
         });
-        this.loading = false;
+        this.authUser = response.data.user;
         this.router.push({ name: "Dashboard" });
       } catch (error) {
-        this.authErrors = handleErrors(error);
+        this.setError(error);
+      } finally {
         this.loading = false;
       }
     },
+
     async logout() {
-      await axiosClient.post(`/logout`);
-      this.handleLogout();
+      try {
+        await axiosClient.post(`/logout`);
+        this.handleLogout();
+      } catch (error) {
+        this.setError(error);
+      }
     },
-    async handleLogout() {
+
+    handleLogout() {
       this.authUser = null;
-      this.isAuthenticated = false;
+      this.error = null;
+      this.authStatus = null;
       for (let key in localStorage) {
         if (key.startsWith('startTime-')) {
           localStorage.removeItem(key);
         }
       }
     },
+
     async forgotPassword(user) {
-      this.authErrors = [];
-      await this.getToken();
+      this.clearError();
 
       try {
+        await this.getToken();
         const response = await axiosClient.post(`/forgot-password`, {
           email: user.email,
         });
         this.authStatus = response.data.status;
       } catch (error) {
-        this.authErrors = handleErrors(error);
+        this.setError(error);
       }
     },
+
     async passwordReset(user) {
-      this.authErrors = [];
-      await this.getToken();
+      this.clearError();
 
       try {
+        await this.getToken();
         const response = await axiosClient.post(`/reset-password`, user);
         this.authStatus = response.data.status;
-
         this.router.push({ name: "Dashboard" });
       } catch (error) {
-        this.authErrors = handleErrors(error);
+        this.setError(error);
       }
     }
   },
 });
-
-

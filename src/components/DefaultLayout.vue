@@ -112,25 +112,27 @@
       </DisclosurePanel>
     </Disclosure>
 
-    <router-view :key="$route.path"></router-view>
+    <Notivue v-slot="item">
+      <NotivueSwipe :item="item">
+        <Notification :item="item">
+          <NotificationProgress :item="item"/>
+        </Notification>
+      </NotivueSwipe>
+    </Notivue>
 
-    <ToastNotification :show="notification.show" :on-dismiss="() => notification.show = false"
-      :intent="notification.intent" :title="notification.title">
-      <p>{{ notification.message }}</p>
-    </ToastNotification>
+    <router-view :key="$route.path"></router-view>
   </div>
 </template>
 
 <script>
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { Notivue, Notification, NotivueSwipe, NotificationProgress} from 'notivue';
 
 import { computed } from 'vue';
 
 import { useRouter } from "vue-router";
 import { useAuthStore } from '../stores/authStore';
-import { useDashboardStore } from '../stores/dashboardStore';
-import ToastNotification from "./ToastNotification.vue";
 
 const navigation = [
   { name: "Dashboard", to: { name: "Dashboard" } },
@@ -149,14 +151,14 @@ export default {
     MenuItems,
     Bars3Icon,
     XMarkIcon,
-    ToastNotification,
+    Notivue,
+    Notification,
+    NotivueSwipe,
+    NotificationProgress,
   },
   setup() {
     const router = useRouter();
     const authenticate = useAuthStore();
-    const dashboardStore = useDashboardStore();
-
-    const notification = computed(() => dashboardStore.notification);
 
     function logout() {
       authenticate.logout()
@@ -173,7 +175,6 @@ export default {
       user: computed(() => authenticate.user),
       navigation,
       logout,
-      notification,
     };
   },
 };

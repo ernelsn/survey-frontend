@@ -100,10 +100,11 @@
                   <input type="text" name="title" id="title" v-model="model.title"
                     class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
-                <p v-if="formStore.errors.title && formStore.errors.title.length > 0"
-                  class="mt-3 text-sm leading-6 text-red-400">
-                  {{ formStore.errors.title[0] }}
-                </p>
+                <div v-if="formStore.error">
+                  <div v-if="formStore.error.validation.title" class="label">
+                    <span class="label-text-alt text-red-400 text-sm">{{ formStore.error.validation.title }}</span>
+                  </div>
+                </div>
               </div>
 
               <div class="col-span-full">
@@ -262,15 +263,19 @@
               </div>
               <div class="mt-3 card bg-base-100 shadow-xl">
                 <div class="card-body">
-                  <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
-                      class="loading loading-dots loading-lg"></span></div>
-                  <div v-for="(question, questionIndex) in section.questions" :key="question.id">
-                    <FormEditor :question="question" :questionIndex="questionIndex" :sectionIndex="sectionIndex"
-                      @change="(q) => questionChange(q, sectionIndex, questionIndex)"
-                      @addQuestion="(i) => addQuestion(i, sectionIndex)"
-                      @deleteQuestion="() => deleteQuestion(sectionIndex, questionIndex)"
-                      @scrollToReference="(sectionIndex, questionIndex) => scrollToReference(sectionIndex, questionIndex)"
-                      @questionDescriptionAsImage="(sIndex, qIndex, desc) => questionDescriptionAsImage(sIndex, qIndex, desc)" />
+                  <div v-if="formSectionLoading" class="mt-10 flex justify-center content-center">
+                    <span class="loading loading-dots loading-lg"></span>
+                  </div>
+                  <div v-else>
+                    <div v-for="(question, questionIndex) in section.questions" :key="question.id">
+                      <FormEditor :question="question" :questionIndex="questionIndex" :sectionIndex="sectionIndex"
+                        :errors="getQuestionErrors(sectionIndex, questionIndex)"
+                        @change="(q) => questionChange(q, sectionIndex, questionIndex)"
+                        @addQuestion="(i) => addQuestion(i, sectionIndex)"
+                        @deleteQuestion="() => deleteQuestion(sectionIndex, questionIndex)"
+                        @scrollToReference="(sectionIndex, questionIndex) => scrollToReference(sectionIndex, questionIndex)"
+                        @questionDescriptionAsImage="(sIndex, qIndex, desc) => questionDescriptionAsImage(sIndex, qIndex, desc)" />
+                    </div>
                   </div>
 
                   <div v-if="!section.questions.length" class="mt-1 text-sm leading-6 text-gray-600 text-center">
@@ -326,7 +331,6 @@ import { useRoute, useRouter } from "vue-router";
 
 // Stores
 import { useFormStore } from "../stores/formStore";
-import { useDashboardStore } from '../stores/dashboardStore';
 import { useDraftStore } from "../stores/draftStore";
 import { useUploadStore } from "../stores/uploadStore";
 
@@ -340,6 +344,7 @@ import ImageElement from "../components/ImageElement.vue";
 import vueFilePond from 'vue-filepond';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
+import { push } from 'notivue';
 
 // Styles
 import 'filepond/dist/filepond.min.css';
@@ -350,7 +355,6 @@ const ModuleFilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPlugi
 const router = useRouter();
 const route = useRoute();
 const formStore = useFormStore();
-const dashboardStore = useDashboardStore();
 const draftStore = useDraftStore();
 const uploadStore = useUploadStore();
 
@@ -371,6 +375,7 @@ const dialogMessage = computed(() => {
 });
 
 const formLoading = computed(() => formStore.currentForm.loading);
+const formSectionLoading = computed(() => formStore.currentForm.sectionLoading);
 const minDate = computed(() => new Date().toISOString().slice(0, 10));
 
 const handleDefaultPointsInput = (event) => {
@@ -505,10 +510,9 @@ const storeForm = async () => {
   const action = model.value.id ? "Updated" : "Created";
   const sectionsData = model.value.sections.map(section => ({
     ...section,
-    id: section.id,
     questions: section.questions.map(question => ({
       ...question,
-      points: model.value.is_quiz 
+      points: model.value.is_quiz
         ? (question.points !== model.value.default_points ? model.value.default_points : question.points)
         : null,
       data: question.data || null,
@@ -516,8 +520,8 @@ const storeForm = async () => {
     }))
   }));
 
-  const formData = { 
-    ...model.value, 
+  const formData = {
+    ...model.value,
     sections: sectionsData,
     default_points: model.value.is_quiz ? model.value.default_points : null,
   };
@@ -525,8 +529,7 @@ const storeForm = async () => {
   const response = await formStore.storeForm(formData);
   if (response?.data) {
     const { data } = response.data;
-    dashboardStore.notify({
-      intent: 'success',
+    push.success({
       title: `${action}`,
       message: `The form was successfully ${action.toLowerCase().trim()}`
     });
@@ -553,10 +556,9 @@ const performDelete = () => {
   if (deleteDialogState.value.type === 'form') {
     formStore.destroyForm(model.value.id).then(() => {
       router.push({ name: "Forms" });
-      dashboardStore.notify({
-        intent: 'success',
-        title: `Form deleted`,
-        message: `The form was successfully deleted`
+      push.success({
+        title: `Deleted`,
+        message: `The form ${model.value.title} has been deleted`
       });
     });
   } else if (deleteDialogState.value.type === 'section') {
@@ -604,10 +606,9 @@ watch(model, () => {
     if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified'
       && model.value.title != null && model.value.title !== '') {
       draftStore.saveAsDraft(model.value);
-      dashboardStore.notify({
-        intent: 'info',
-        title: 'Draft saved',
-        message: 'Your work is saved as a draft until submission.'
+      push.info({
+        title: 'Saved locally',
+        message: 'Your work is saved as a draft locally until submission.'
       });
     }
   }, 2000);
@@ -626,10 +627,9 @@ const loadDraft = async () => {
   draftStore.setFormState('loaded');
   if (draftStore.data) {
     Object.assign(model.value, draftStore.data);
-    dashboardStore.notify({
-      intent: 'success',
+    push.success({
       title: 'Draft loaded',
-      message: 'The draft was successfully loaded'
+      message: 'The draft was loaded'
     });
   }
 };
@@ -639,5 +639,17 @@ const scrollToReference = (sectionIndex) => {
   if (button) {
     button.scrollIntoView({ behavior: 'smooth' });
   }
+};
+
+const getQuestionErrors = (sectionIndex, questionIndex) => {
+  if (!formStore.error || !formStore.error.validation) return {};
+  const errors = {};
+  const prefix = `sections.${sectionIndex}.questions.${questionIndex}.`;
+  for (const [key, value] of Object.entries(formStore.error.validation)) {
+    if (key.startsWith(prefix)) {
+      errors[key.replace(prefix, '')] = value;
+    }
+  }
+  return errors;
 };
 </script>

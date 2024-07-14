@@ -54,8 +54,9 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { push } from 'notivue';
+
 import { useFormStore } from "../stores/formStore";
-import { useDashboardStore } from '../stores/dashboardStore';
 
 import PageComponent from "../components/PageComponent.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
@@ -65,7 +66,6 @@ const showDelete = ref(false);
 const selectedForm = ref(null);
 
 const formStore = useFormStore();
-const dashboardStore = useDashboardStore();
 
 const dialogTitle = computed(() => 'Delete Form');
 const dialogMessage = computed(() => 'Are you sure you want to delete this form? All of the data pertaining to this form will be permanently removed. This action cannot be undone.');
@@ -81,10 +81,9 @@ function showDeleteDialog(id) {
 
 async function performDelete() {
   await formStore.destroyForm(selectedForm.value);
-  dashboardStore.notify({
-    intent: 'info',
-    title: `Form deleted`,
-    message: `The form was successfully deleted`
+  push.success({
+    title: `Deleted`,
+    message: `The form was deleted`
   });
   showDelete.value = false;
   await formStore.getForms();

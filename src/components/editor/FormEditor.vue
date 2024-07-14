@@ -18,6 +18,9 @@
           @change="dataChange"
           class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"></textarea>
       </div>
+      <div v-if="errors.question" class="mt-1 text-sm text-red-400">
+        {{ errors.question }}
+      </div>
     </div>
 
     <div class="sm:col-span-2">
@@ -27,6 +30,9 @@
           class="select select-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6">
           <option v-for="type in questionTypes" :key="type" :value="type">{{ upperCaseFirst(type) }}</option>
         </select>
+      </div>
+      <div v-if="errors.type" class="mt-1 text-sm text-red-400">
+        {{ errors.type }}
       </div>
     </div>
 
@@ -169,6 +175,7 @@ const props = defineProps({
   question: Object,
   questionIndex: Number,
   sectionIndex: Number,
+  errors: Object,
 });
 
 const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "questionDescriptionAsImage"]);
@@ -183,9 +190,9 @@ const selectedOption = computed(() => {
   return model.value.data.options.find(option => option.uuid === model.value.correct_option);
 });
 
-function upperCaseFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+const upperCaseFirst = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
 
 function hasOptions() {
   return ["multiple choice", "checkbox", "dropdown", "linear scale"].includes(model.value.type);
@@ -259,7 +266,6 @@ async function handleFilePondProcess(fieldName, file, metadata, load, error, pro
     load(res.data);
     emit('questionDescriptionAsImage', props.sectionIndex, props.questionIndex, res.data);
   } catch (err) {
-    console.error('Error occurred:', err);
     error('An error occurred');
   }
 }
@@ -272,4 +278,5 @@ async function handleFilePondRevert(uniqueFileId, load, error) {
     error('An error occurred');
   }
 }
+
 </script>

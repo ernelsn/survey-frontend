@@ -8,15 +8,17 @@
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-      <form class="space-y-6" @submit.prevent="authenticate.login(form)">
+      <form class="space-y-6" @submit.prevent="auth.login(form)">
         <div>
           <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
           <div class="mt-2">
             <input id="email" name="email" type="email" autocomplete="email" required="" v-model="form.email"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
           </div>
-          <div class="label" v-if="authenticate.errors.email && authenticate.errors.email.length > 0">
-            <span class="label-text-alt text-red-400 text-sm">{{ authenticate.errors.email[0] }}</span>
+          <div v-if="auth.error">
+            <div v-if="auth.error.validation.email" class="label">
+              <span class="label-text-alt text-red-400 text-sm">{{ auth.error.validation.email }}</span>
+            </div>
           </div>
         </div>
 
@@ -30,7 +32,8 @@
             </div>
           </div>
           <div class="mt-2">
-            <input id="password" name="password" type="password" autocomplete="current-password" required="" v-model="form.password"
+            <input id="password" name="password" type="password" autocomplete="current-password" required=""
+              v-model="form.password"
               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
           </div>
         </div>
@@ -48,7 +51,7 @@
         <div>
           <button type="submit"
             class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-            <span v-if="authenticate.loading" class="loading loading-dots loading-sm mr-1"></span>
+            <span v-if="auth.loading" class="loading loading-dots loading-sm mr-1"></span>
             Sign in</button>
         </div>
       </form>
@@ -68,7 +71,7 @@
 import { ref } from "vue";
 import { useAuthStore } from '../stores/authStore';
 
-const authenticate = useAuthStore();
+const auth = useAuthStore();
 
 const form = ref({
   email: "test@example.com",

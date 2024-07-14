@@ -2,17 +2,17 @@
   <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
     <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
       <div class="py-5 px-8">
-        <div v-if="loading" class="flex justify-center">
-          <span class="loading loading-dots loading-lg mr-1"></span>
+        <div v-if="formStore.error" class="error-container">
+          <h1 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+            {{ formStore.currentForm.data.title }}
+          </h1>
+          <p class="mt-6 text-base leading-7 text-gray-600">
+            {{ errorMessage }}
+          </p>
         </div>
 
-        <div v-else-if="!form.accept_response">
-          <h1 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">{{ form.title }}
-          </h1>
-          <p class="mt-6 text-base leading-7 text-gray-600">The form {{ form.title }} is no
-            longer accepting responses. <br> Try contacting the owner of the form if you think this is a
-            mistake.
-          </p>
+        <div v-if="loading" class="flex justify-center">
+          <span class="loading loading-dots loading-lg mr-1"></span>
         </div>
 
         <div v-else-if="formResponseStore.ended" class="text-center">
@@ -27,9 +27,9 @@
             <div v-else>
               <p class="text-base font-bold leading-7 text-gray-600">Your Overall Score</p>
               <div class="mt-3 flex h-40 w-40 items-center justify-center rounded-full bg-gray-900 gap-x-3">
-                <span class="text-5xl font-medium text-white">{{ results.overall_results.total_correct_responses }}
+                <span class="text-5xl font-medium text-white">{{ results.overall_results.total_correct_points }}
                   &#47;</span>
-                <span class="text-3xl font-medium text-slate-400">{{ results.overall_results.total_questions }}</span>
+                <span class="text-3xl font-medium text-slate-400">{{ results.overall_results.total_points }}</span>
               </div>
               <div v-for="section in results.section_results" :key="section.section_id" class="mt-6">
                 <p class="text-base font-semibold leading-7 text-gray-600">{{ section.section_title }}</p>
@@ -50,7 +50,7 @@
           </div>
         </div>
 
-        <form v-else-if="!formResponseStore.ended" @submit.prevent="submitForm" class="container mx-auto">
+        <form v-else-if="!formResponseStore.ended && !formStore.error" @submit.prevent="submitForm" class="container mx-auto">
           <div class="grid items-center mb-5">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
@@ -64,7 +64,8 @@
                 <div>
                   <h1 class="text-5xl font-bold">{{ form.title }}</h1>
                   <p class="py-6" v-html="form.description"></p>
-                  <button v-if="!formResponseStore.started" class="btn btn-neutral" @click="start">Start</button>
+                  <button v-if="!formResponseStore.started && !formStore.error" class="btn btn-neutral"
+                    @click="start">Start</button>
 
                   <div v-if="formResponseStore.started" class="flex gap-5">
                     <div>
@@ -139,6 +140,25 @@ const form = computed(() => formStore.currentForm.data);
 
 const results = computed(() => formResponseStore.results);
 const loadResult = computed(() => formResponseStore.loadResults);
+
+const errorMessage = computed(() => {
+  if (!formStore.error) return '';
+
+  const title = formStore.currentForm.data.title;
+
+  switch (formStore.error) {
+    case 'Form not found':
+      return `The form "${title}" could not be found. Please check the URL and try again.`;
+    case 'Form has expired':
+      return `The form "${title}" has expired and is no longer accepting responses.`;
+    case 'You have already submitted a response to this form.':
+      return `You have already submitted a response to the form "${title}". Multiple submissions are not allowed.`;
+    case 'Form is not accepting responses':
+      return `The form "${title}" is no longer accepting responses. Try contacting the owner of the form if you think this is a mistake.`;
+    default:
+      return formStore.error || 'An error occurred while loading the form. Please try again later.';
+  }
+});
 
 let timerId = null;
 const responses = ref({});

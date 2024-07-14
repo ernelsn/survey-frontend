@@ -43,14 +43,13 @@ const routes = [
       const formStore = useFormStore();
       try {
         const response = await formStore.getFormBySlug(to.params.slug);
-        if (response.data.is_published === 0) {
+        if (!response.data.is_published) {
           to.matched[0].components.default = NotFound;
           next();
         } else {
           next();
         }
       } catch (error) {
-        to.matched[0].components.default = NotFound;
         next();
       }
     }
