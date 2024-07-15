@@ -373,8 +373,8 @@ const handleDefaultPointsInput = (event) => {
 };
 
 onMounted(async () => {
-  if (route.query.draftId) {
-    draftStore.draftId = route.query.draftId;
+  if (route.query.draft || route.query.draftId) {
+    draftStore.draftId = route.query.draft || route.query.draftId;
     await draftStore.loadSpecificDraft();
     formStore.setFormData(draftStore.data);
   } else if (route.params.id) {
@@ -533,7 +533,7 @@ const storeForm = async () => {
       await draftStore.deleteDraft(draftStore.draftId);
     }
 
-    router.push({ name: "FormsModule", params: { id: data.id } });
+    router.push({ name: "FormEdit", params: { id: data.id } });
     draftStore.setFormState('submitted');
     draftStore.clearDraft(model.value.title);
 
@@ -616,7 +616,7 @@ watch(model, (newVal) => {
         message: 'Failed to save draft. Will try again later.',
       });
     }
-  }, 15000); // 15 secs
+  }, 10000); // 15 secs
 }, { deep: true });
 
 const toggleIsPublish = () => {

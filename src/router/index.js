@@ -28,9 +28,16 @@ const routes = [
     children: [
       { path: "/dashboard", name: "Dashboard", component: Dashboard },
       { path: "/forms", name: "Forms", component: Forms },
-      { path: "/forms/create", name: "FormsCreate", component: FormsModule },
-      // { path: '/forms/:id?', name: 'FormsModule', component: FormsModule, props: true },
-      { path: '/forms/:id?', name: 'FormsModule', component: FormsModule, props: route => ({ id: route.params.id, draftId: route.query.draftId }) },
+      { path: "/forms/create", name: "FormCreate", component: FormsModule },
+      { 
+        path: '/forms/edit/:id?', 
+        name: 'FormEdit', 
+        component: FormsModule, 
+        props: route => ({ 
+          id: route.params.id, 
+          draftId: route.query.draft || route.query.draftId 
+        }) 
+      },
       { path: "/forms/:id/responses", name: "FormResponses", component: FormResponses },
       { path: "/learnings", name: "Learnings", component: Learnings },
     ],
@@ -39,6 +46,7 @@ const routes = [
     path: "/view/forms/:slug/public",
     name: 'FormsPublicView',
     component: FormsPublicView,
+    meta: { requiresAuth: true },
   },
   {
     path: "/login",
