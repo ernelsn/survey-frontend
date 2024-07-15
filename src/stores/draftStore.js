@@ -1,62 +1,113 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
+import axiosClient from "../axios";
 
-export const useDraftStore = defineStore('draft', {
+export const useDraftStore = defineStore("draft", {
   state: () => ({
     formTitle: "",
-    data: {
-      title: "",
-      slug: "",
-      description: null,
-      image: null,
-      expire_date: null,
-      time_limit: null,
-      is_published: false,
-      show_results: false,
-      multiple_attempts: false,
-      questions: [],
-    },
-    state: 'initial',
+    data: {},
+    savedToServer: false,
+    draftId: null,
+    drafts: [],
+    formState: "unsaved",
   }),
   actions: {
     setFormTitle(title) {
+      if (this.currentLocalStorageKey) {
+        localStorage.removeItem(this.currentLocalStorageKey);
+      }
       this.formTitle = title;
+      this.currentLocalStorageKey = this.formTitle ? this.formTitle + '_form' : 'untitled_form';
+      this.saveDraftLocally(this.data);
     },
 
     setFormState(state) {
-      this.state = state;
+      this.formState = state;
     },
 
-    saveAsDraft(data) {
-      const key = this.formTitle + '_form';
-      localStorage.setItem(key, JSON.stringify(data));
-    },
-
-    loadAsDraft() {
-      const keys = Object.keys(localStorage);
-      const formKey = keys.find(key => key.endsWith('_form'));
-      if (formKey) {
-        const retrievedModelDraft = localStorage.getItem(formKey);
-        if (retrievedModelDraft) {
-          Object.assign(this.data, JSON.parse(retrievedModelDraft));
-          this.formTitle = formKey.replace('_form', '');
-        }
+    saveDraftLocally(data) {
+      if (!this.currentLocalStorageKey) {
+        this.currentLocalStorageKey = this.formTitle ? this.formTitle + '_form' : 'untitled_form';
       }
+      localStorage.setItem(this.currentLocalStorageKey, JSON.stringify(data));
     },
 
-    isEqualWithDraft() {
-      const key = this.formTitle + '_form';
-      const savedDraft = localStorage.getItem(key);
-      if (savedDraft) {
-        const savedData = JSON.parse(savedDraft);
-        return JSON.stringify(this.data) === JSON.stringify(savedData);
+    clearDraft() {
+      if (this.currentLocalStorageKey) {
+        localStorage.removeItem(this.currentLocalStorageKey);
       }
-      return false;
-    },    
-
-    clearDraft(title) {
-      const key = title + '_form';
-      localStorage.removeItem(key);
       this.data = {};
+      this.formTitle = "";
+      this.draftId = null;
+      this.currentLocalStorageKey = null;
+    },
+
+    async saveAsDraft(data) {
+      try {
+        let response;
+        if (this.draftId) {
+          response = await axiosClient.put(`/api/v1/drafts/${this.draftId}`, {
+            title: this.formTitle || "Untitled Form",
+            data: data,
+          });
+        } else {
+          response = await axiosClient.post("/api/v1/drafts", {
+            title: this.formTitle || "Untitled Form",
+            data: data,
+          });
+        }
+        this.draftId = response.data.id;
+        this.savedToServer = true;
+        return response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async getFormDrafts() {
+      try {
+        const response = await axiosClient.get("/api/v1/drafts");
+        this.drafts = response.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async loadSpecificDraft() {
+      try {
+        const response = await axiosClient.get(`/api/v1/drafts/${this.draftId}`);
+        const serverData = response.data;
+        if (serverData) {
+          this.formTitle = serverData.title || 'Untitled Form';
+          this.currentLocalStorageKey = this.formTitle + '_form';
+          const parsedData = typeof serverData.data === 'string' ? JSON.parse(serverData.data) : serverData.data;
+          this.saveDraftLocally(parsedData);
+          Object.assign(this.data, parsedData);
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async deleteDraft(draftId) {
+      try {
+        await axiosClient.delete(`/api/v1/drafts/${draftId}`);
+        this.drafts = this.drafts.filter((draft) => draft.id !== draftId);
+        if (this.draftId === draftId) {
+          this.draftId = null;
+          this.data = {};
+          this.formTitle = "";
+        }
+      } catch (error) {
+        console.error("Error deleting draft:", error);
+        throw error;
+      }
+    },
+
+    async createOrUpdateDraft(formData) {
+      if (this.formState === "submitted") {
+        this.draftId = null;
+      }
+      await this.saveAsDraft(formData);
     },
   },
 });

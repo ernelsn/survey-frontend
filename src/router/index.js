@@ -18,7 +18,6 @@ const Learnings = () => import("../views/Learnings.vue");
 const NotFound = () => import("../views/NotFound.vue");
 
 import { useAuthStore } from '../stores/authStore';
-import { useFormStore } from '../stores/formStore';
 
 const routes = [
   {
@@ -30,7 +29,8 @@ const routes = [
       { path: "/dashboard", name: "Dashboard", component: Dashboard },
       { path: "/forms", name: "Forms", component: Forms },
       { path: "/forms/create", name: "FormsCreate", component: FormsModule },
-      { path: "/forms/:id", name: "FormsModule", component: FormsModule },
+      // { path: '/forms/:id?', name: 'FormsModule', component: FormsModule, props: true },
+      { path: '/forms/:id?', name: 'FormsModule', component: FormsModule, props: route => ({ id: route.params.id, draftId: route.query.draftId }) },
       { path: "/forms/:id/responses", name: "FormResponses", component: FormResponses },
       { path: "/learnings", name: "Learnings", component: Learnings },
     ],
@@ -39,20 +39,6 @@ const routes = [
     path: "/view/forms/:slug/public",
     name: 'FormsPublicView',
     component: FormsPublicView,
-    beforeEnter: async (to, from, next) => {
-      const formStore = useFormStore();
-      try {
-        const response = await formStore.getFormBySlug(to.params.slug);
-        if (!response.data.is_published) {
-          to.matched[0].components.default = NotFound;
-          next();
-        } else {
-          next();
-        }
-      } catch (error) {
-        next();
-      }
-    }
   },
   {
     path: "/login",

@@ -2,7 +2,19 @@ import { defineStore } from "pinia";
 import axiosClient from "../axios";
 
 export const useUploadStore = defineStore("upload", {
+  state: () => ({
+    error: null,
+  }),
+
   actions: {
+    setError(error) {
+      this.error = error;
+    },
+
+    clearError() {
+      this.error = null;
+    },
+
     async uploadFile(file, type) {
       try {
         const formData = new FormData();
@@ -10,8 +22,7 @@ export const useUploadStore = defineStore("upload", {
         const response = await axiosClient.post('/api/v1/uploads', formData);
         return response;
       } catch (error) {
-        console.error(`Error uploading ${type}:`, error);
-        throw error;
+        this.setError(error);
       }
     },
 
@@ -28,7 +39,7 @@ export const useUploadStore = defineStore("upload", {
         const response = await axiosClient.delete(`/api/v1/revert/${folder}`);
         return response;
       } catch (error) {
-        return error;
+        this.setError(error);
       }
     },
     

@@ -29,16 +29,6 @@ axiosClient.interceptors.response.use(
           error.validation[field] = err.response.data.errors[field][0];
         }
         break;
-      // case 422:
-      //   error.validation = err.response.data.errors;
-      //   error.message = err.response.data.message;
-      //   break;
-      // case 403:
-      //   error.message = "You're not allowed to do that.";
-      //   break;
-      // case 401:
-      //   error.message = "Please re-login.";
-      //   break;
       case 500:
         error.message = "Something went really bad. Sorry.";
         break;

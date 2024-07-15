@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col py-4 px-6 shadow-md bg-white hover:bg-gray-50 h-[470px]">
+  <div class="flex flex-col py-4 px-6 shadow-md bg-slate-50 hover:bg-slate-200 h-[360px] rounded-md">
     <ImageElement :webp-src="form.image_webp_url" :fallback-src="form.image_url" :alt="form.title"
       class="w-full h-48 object-cover" />
     <h4 class="mt-4 text-lg font-bold">{{ form.title }}</h4>

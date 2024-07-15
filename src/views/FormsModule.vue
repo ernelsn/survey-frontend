@@ -42,29 +42,9 @@
               Delete
             </button>
           </span>
-
-          <DeleteFormDialog :is-opened="deleteDialogState.isOpen" @toggle="(value) => deleteDialogState.isOpen = value"
-            :on-delete="performDelete" :title="dialogTitle" :message="dialogMessage" />
         </div>
       </div>
     </template>
-
-    <div v-if="hasDraft && draftStore.state != 'loaded' && draftStore.state != 'submitted'"
-      class="mx-auto px-4 lg:px-8">
-      <div class="px-4 sm:px-0">
-        <h3 class="text-sm leading-7 text-gray-900">You’ve got some drafts that aren’t finished yet. Would you like to
-          proceed loading it?</h3>
-      </div>
-      <div class="mt-6 border-t border-gray-100">
-        <dl class="divide-y divide-gray-100" v-for="key in currentFormDraft" :key="key">
-          <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt class="text-sm font-medium leading-6 text-gray-900">{{ key.replace('_form', '') }}</dt>
-            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0"><button class="btn btn-info btn-sm"
-                @click="loadDraft">Load draft</button></dd>
-          </div>
-        </dl>
-      </div>
-    </div>
 
     <div v-if="formLoading" class="mt-10 flex justify-center content-center"><span
         class="loading loading-dots loading-lg"></span></div>
@@ -97,7 +77,7 @@
               <div class="col-span-full">
                 <label for="title" class="block text-sm font-medium leading-6 text-gray-900">Title</label>
                 <div class="mt-2">
-                  <input type="text" name="title" id="title" v-model="model.title"
+                  <input type="text" name="title" id="title" v-model="model.title" @input="updateFormTitle($event.target.value)"
                     class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
                 <div v-if="formStore.error">
@@ -321,13 +301,16 @@
         </div>
       </form>
     </div>
+    <DeleteFormDialog :is-opened="deleteDialogState.isOpen" @toggle="(value) => deleteDialogState.isOpen = value"
+      :on-delete="performDelete" :title="dialogTitle" :message="dialogMessage" />
   </PageComponent>
 </template>
 
 <script setup>
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { push } from 'notivue';
 
 // Stores
 import { useFormStore } from "../stores/formStore";
@@ -344,13 +327,14 @@ import ImageElement from "../components/ImageElement.vue";
 import vueFilePond from 'vue-filepond';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
-import { push } from 'notivue';
 
 // Styles
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
 const ModuleFilePond = vueFilePond(FilePondPluginFileValidateType, FilePondPluginImagePreview);
+
+defineProps(['id', 'draftId']);
 
 const router = useRouter();
 const route = useRoute();
@@ -388,18 +372,17 @@ const handleDefaultPointsInput = (event) => {
   updateQuestionsWithDefaultPoints();
 };
 
-const hasDraft = computed(() => Object.keys(localStorage).some(key => key.endsWith('_form')));
-const allDrafts = computed(() => Object.keys(localStorage).filter(key => key.endsWith('_form')));
-const currentFormDraft = computed(() => {
-  const formTitle = model.value.title.toLowerCase() + '_form';
-  return model.value.title
-    ? Object.keys(localStorage).filter(key => key.toLowerCase() === formTitle)
-    : allDrafts.value;
+onMounted(async () => {
+  if (route.query.draftId) {
+    draftStore.draftId = route.query.draftId;
+    await draftStore.loadSpecificDraft();
+    formStore.setFormData(draftStore.data);
+  } else if (route.params.id) {
+    await formStore.getForm(route.params.id);
+  } else {
+    // New form, no action needed
+  }
 });
-
-if (route.params.id) {
-  formStore.getForm(route.params.id);
-}
 
 const model = ref({
   title: "",
@@ -504,7 +487,19 @@ const updateQuestionsWithDefaultPoints = () => {
   });
 };
 
+const updateFormTitle = (newTitle) => {
+  draftStore.setFormTitle(newTitle);
+  model.value.title = newTitle;
+};
+
 watch(() => model.value.default_points, updateQuestionsWithDefaultPoints);
+
+watch(() => model.value, async (newVal, oldVal) => {
+  if (draftStore.formState === 'submitted' && JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
+    await draftStore.createOrUpdateDraft(newVal);
+    draftStore.setFormState('unsaved');
+  }
+}, { deep: true });
 
 const storeForm = async () => {
   const action = model.value.id ? "Updated" : "Created";
@@ -519,7 +514,6 @@ const storeForm = async () => {
       description: question.description || null
     }))
   }));
-
   const formData = {
     ...model.value,
     sections: sectionsData,
@@ -533,6 +527,12 @@ const storeForm = async () => {
       title: `${action}`,
       message: `The form was successfully ${action.toLowerCase().trim()}`
     });
+
+    // Delete the draft if it exists
+    if (draftStore.draftId) {
+      await draftStore.deleteDraft(draftStore.draftId);
+    }
+
     router.push({ name: "FormsModule", params: { id: data.id } });
     draftStore.setFormState('submitted');
     draftStore.clearDraft(model.value.title);
@@ -549,6 +549,10 @@ const storeForm = async () => {
       }));
     }
     model.value.default_points = data.default_points;
+
+    // Create a new draft if there are changes
+    const newFormData = { ...model.value };
+    await draftStore.createOrUpdateDraft(newFormData);
   }
 };
 
@@ -594,24 +598,25 @@ const handleFilePondRevert = async (uniqueFileId, load, error) => {
   }
 };
 
-const fieldUpdate = () => {
-  draftStore.setFormState('modified');
-};
+let saveTimeout;
 
-let timeout;
-watch(model, () => {
+watch(model, (newVal) => {
+  clearTimeout(saveTimeout);
   draftStore.setFormTitle(model.value.title);
-  clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    if (!draftStore.isEqualWithDraft() && draftStore.state === 'modified'
-      && model.value.title != null && model.value.title !== '') {
-      draftStore.saveAsDraft(model.value);
+  saveTimeout = setTimeout(() => {
+    try {
+      draftStore.saveAsDraft(newVal);
       push.info({
-        title: 'Saved locally',
-        message: 'Your work is saved as a draft locally until submission.'
+        title: 'Saved as draft',
+        message: 'Your work is saved as a draft until submission.'
+      });
+    } catch (error) {
+      push.error({
+        title: 'Draft failed',
+        message: 'Failed to save draft. Will try again later.',
       });
     }
-  }, 2000);
+  }, 15000); // 15 secs
 }, { deep: true });
 
 const toggleIsPublish = () => {
@@ -620,18 +625,6 @@ const toggleIsPublish = () => {
 
 const toggleIsQuiz = () => {
   isQuiz.value = model.value.is_quiz;
-};
-
-const loadDraft = async () => {
-  draftStore.loadAsDraft();
-  draftStore.setFormState('loaded');
-  if (draftStore.data) {
-    Object.assign(model.value, draftStore.data);
-    push.success({
-      title: 'Draft loaded',
-      message: 'The draft was loaded'
-    });
-  }
 };
 
 const scrollToReference = (sectionIndex) => {

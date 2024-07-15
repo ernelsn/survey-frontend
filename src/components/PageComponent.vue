@@ -8,13 +8,17 @@
     </div>
   </header>
   <main>
-    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8" v-bind="attrs">
         <slot></slot>
     </div>
   </main>
 </template>
 
 <script setup>
+import { useAttrs } from 'vue';
+
+const attrs = useAttrs();
+
 const props = defineProps({
   title: String,
 });

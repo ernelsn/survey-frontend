@@ -30,6 +30,10 @@ export const useFormStore = defineStore('form', {
       this.error = null;
     },
 
+    setFormData(draftData) {
+      this.currentForm.data = draftData;
+    },
+
     async getForms(url = '/api/v1/forms') {
       this.forms.loading = true;
       this.setError(null);
@@ -37,8 +41,8 @@ export const useFormStore = defineStore('form', {
         const response = await formService.getForms(url);
         this.forms.data = response.data.data;
         this.forms.links = response.data.meta.links;
-      } catch (err) {
-        this.setError(handleErrors(err));
+      } catch (error) {
+        this.setError(error);
       } finally {
         this.forms.loading = false;
       }
@@ -82,6 +86,7 @@ export const useFormStore = defineStore('form', {
     },
 
     async storeForm(form) {
+      this.currentForm.loading = true;
       let response;
       try {
         if (form.id) {
@@ -89,7 +94,6 @@ export const useFormStore = defineStore('form', {
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
         } else {
-          this.currentForm.loading = true;
           response = await formService.storeForm(form);
           this.currentForm.data = response.data.data;
         }
@@ -107,7 +111,7 @@ export const useFormStore = defineStore('form', {
         const response = await formService.updateFormResponseAcceptance(id);
         return response.data
       } catch (error) {
-        console.error('Error updating form response acceptance:', error)
+        this.setError(error);
         throw error
       }
     },

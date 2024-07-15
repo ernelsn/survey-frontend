@@ -91,6 +91,7 @@ import { useRoute } from "vue-router";
 import { useFormResponseStore } from '../stores/formResponseStore';
 import { useFormStore } from "../stores/formStore";
 import PageComponent from "../components/PageComponent.vue";
+import { push } from 'notivue';
 
 const route = useRoute();
 const formResponseStore = useFormResponseStore();
@@ -118,6 +119,9 @@ async function toggleAcceptance() {
   try {
     isAccepting.value = !isAccepting.value;
     const response = await formStore.updateFormResponseAcceptance(route.params.id);
+    push.info({
+        message: `Form configuration updated`
+    });
     if (response && typeof response.is_accepting !== 'undefined') {
       isAccepting.value = response.is_accepting;
     }
