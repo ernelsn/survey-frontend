@@ -77,7 +77,8 @@
               <div class="col-span-full">
                 <label for="title" class="block text-sm font-medium leading-6 text-gray-900">Title</label>
                 <div class="mt-2">
-                  <input type="text" name="title" id="title" v-model="model.title" @input="updateFormTitle($event.target.value)"
+                  <input type="text" name="title" id="title" v-model="model.title"
+                    @input="updateFormTitle($event.target.value)"
                     class="input input-bordered w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6" />
                 </div>
                 <div v-if="formStore.error">
@@ -372,18 +373,6 @@ const handleDefaultPointsInput = (event) => {
   updateQuestionsWithDefaultPoints();
 };
 
-onMounted(async () => {
-  if (route.query.draft || route.query.draftId) {
-    draftStore.draftId = route.query.draft || route.query.draftId;
-    await draftStore.loadSpecificDraft();
-    formStore.setFormData(draftStore.data);
-  } else if (route.params.id) {
-    await formStore.getForm(route.params.id);
-  } else {
-    // New form, no action needed
-  }
-});
-
 const model = ref({
   title: "",
   slug: "",
@@ -401,6 +390,26 @@ const model = ref({
     description: "",
     questions: [],
   }],
+});
+
+const isSubmitting = ref(false);
+const initialModelState = JSON.stringify(model.value);
+let saveTimeout;
+
+onMounted(async () => {
+  if (route.query.draft || route.query.draftId) {
+    draftStore.draftId = route.query.draft || route.query.draftId;
+    await draftStore.loadSpecificDraft();
+    Object.assign(model.value, draftStore.data);
+    draftStore.setSubmitted(false);
+  } else if (route.params.id) {
+    const formData = await formStore.getForm(route.params.id);
+    Object.assign(model.value, formData);
+    draftStore.setSubmitted(true);
+    draftStore.setFormTitle(model.value.title);
+  } else {
+    draftStore.setSubmitted(false);
+  }
 });
 
 watch(() => formStore.currentForm.data, (newVal) => {
@@ -494,15 +503,76 @@ const updateFormTitle = (newTitle) => {
 
 watch(() => model.value.default_points, updateQuestionsWithDefaultPoints);
 
-watch(() => model.value, async (newVal, oldVal) => {
-  if (draftStore.formState === 'submitted' && JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-    await draftStore.createOrUpdateDraft(newVal);
-    draftStore.setFormState('unsaved');
+watch(() => model.value, (newVal) => {
+  if (!isSubmitting.value && draftStore.formState !== 'submitted' && JSON.stringify(newVal) !== initialModelState) {
+    clearTimeout(saveTimeout);
+    draftStore.setFormTitle(newVal.title);
+    saveTimeout = setTimeout(async () => {
+      try {
+        await draftStore.createOrUpdateDraft(newVal);
+        push.info({
+          title: 'Saved as draft',
+          message: 'Your work is saved as a draft until submission.'
+        });
+      } catch (error) {
+        push.error({
+          title: 'Draft failed',
+          message: 'Failed to save draft. Will try again later.',
+        });
+      }
+    }, 7 * 1000); // 7 second debounce
   }
 }, { deep: true });
 
 const storeForm = async () => {
+  isSubmitting.value = true;
   const action = model.value.id ? "Updated" : "Created";
+  const formData = prepareFormData();
+
+  try {
+    const response = await formStore.storeForm(formData);
+    if (response?.data) {
+      const { data } = response.data;
+      if (draftStore.draftId) {
+        await draftStore.deleteDraft(draftStore.draftId);
+      }
+
+      updateModelWithResponseData(data);
+      draftStore.setFormState('submitted');
+      draftStore.clearDraft();
+
+      router.push({ name: "FormEdit", params: { id: data.id } });
+      push.success({
+        title: `${action}`,
+        message: `The form was successfully ${action.toLowerCase().trim()}`
+      });
+    }
+  } catch (error) {
+    push.error({
+      title: 'Submission failed',
+      message: 'Failed to submit the form. Please try again.',
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const updateModelWithResponseData = (data) => {
+  if (data.sections) {
+    model.value.sections = data.sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      description: section.description,
+      questions: (section.questions || []).map(question => ({
+        ...question,
+        points: model.value.is_quiz ? (question.points || data.default_points) : null
+      })),
+    }));
+  }
+  model.value.default_points = data.default_points;
+};
+
+const prepareFormData = () => {
   const sectionsData = model.value.sections.map(section => ({
     ...section,
     questions: section.questions.map(question => ({
@@ -514,46 +584,12 @@ const storeForm = async () => {
       description: question.description || null
     }))
   }));
-  const formData = {
+
+  return {
     ...model.value,
     sections: sectionsData,
     default_points: model.value.is_quiz ? model.value.default_points : null,
   };
-
-  const response = await formStore.storeForm(formData);
-  if (response?.data) {
-    const { data } = response.data;
-    push.success({
-      title: `${action}`,
-      message: `The form was successfully ${action.toLowerCase().trim()}`
-    });
-
-    // Delete the draft if it exists
-    if (draftStore.draftId) {
-      await draftStore.deleteDraft(draftStore.draftId);
-    }
-
-    router.push({ name: "FormEdit", params: { id: data.id } });
-    draftStore.setFormState('submitted');
-    draftStore.clearDraft(model.value.title);
-
-    if (data.sections) {
-      model.value.sections = data.sections.map(section => ({
-        id: section.id,
-        title: section.title,
-        description: section.description,
-        questions: (section.questions || []).map(question => ({
-          ...question,
-          points: model.value.is_quiz ? (question.points || data.default_points) : null
-        })),
-      }));
-    }
-    model.value.default_points = data.default_points;
-
-    // Create a new draft if there are changes
-    const newFormData = { ...model.value };
-    await draftStore.createOrUpdateDraft(newFormData);
-  }
 };
 
 const performDelete = () => {
@@ -597,27 +633,6 @@ const handleFilePondRevert = async (uniqueFileId, load, error) => {
     error('An error occurred');
   }
 };
-
-let saveTimeout;
-
-watch(model, (newVal) => {
-  clearTimeout(saveTimeout);
-  draftStore.setFormTitle(model.value.title);
-  saveTimeout = setTimeout(() => {
-    try {
-      draftStore.saveAsDraft(newVal);
-      push.info({
-        title: 'Saved as draft',
-        message: 'Your work is saved as a draft until submission.'
-      });
-    } catch (error) {
-      push.error({
-        title: 'Draft failed',
-        message: 'Failed to save draft. Will try again later.',
-      });
-    }
-  }, 10000); // 15 secs
-}, { deep: true });
 
 const toggleIsPublish = () => {
   isPublish.value = model.value.is_published;

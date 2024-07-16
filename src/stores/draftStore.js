@@ -9,6 +9,8 @@ export const useDraftStore = defineStore("draft", {
     draftId: null,
     drafts: [],
     formState: "unsaved",
+    currentLocalStorageKey: null,
+    isSubmitted: false,
   }),
   actions: {
     setFormTitle(title) {
@@ -24,11 +26,19 @@ export const useDraftStore = defineStore("draft", {
       this.formState = state;
     },
 
+    setSubmitted(value) {
+      this.isSubmitted = value;
+    },
+
     saveDraftLocally(data) {
       if (!this.currentLocalStorageKey) {
         this.currentLocalStorageKey = this.formTitle ? this.formTitle + '_form' : 'untitled_form';
       }
       localStorage.setItem(this.currentLocalStorageKey, JSON.stringify(data));
+    },
+
+    resetFormState() {
+      this.formState = 'editing';
     },
 
     clearDraft() {
@@ -98,14 +108,14 @@ export const useDraftStore = defineStore("draft", {
           this.formTitle = "";
         }
       } catch (error) {
-        console.error("Error deleting draft:", error);
         throw error;
       }
     },
 
     async createOrUpdateDraft(formData) {
-      if (this.formState === "submitted") {
-        this.draftId = null;
+      if (this.formState === 'submitted') {
+        this.formState = 'editing';
+        return;
       }
       await this.saveAsDraft(formData);
     },

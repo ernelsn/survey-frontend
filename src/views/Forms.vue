@@ -77,9 +77,9 @@
           </div>
         </div>
       </div>
-    </div>
-    <div v-else class="relative card bg-base-100 shadow-xl mt-3">
-      <p class="text-gray-600 text-center py-16">No forms has been created yet</p>
+      <div v-else class="relative card bg-base-100 shadow-xl mt-3">
+        <p class="text-gray-600 text-center py-16">No forms has been created yet</p>
+      </div>
     </div>
 
     <DeleteFormDialog :isOpened="showDelete" @toggle="(value) => showDelete = value" :on-delete="performDelete"
@@ -123,7 +123,7 @@ async function performDelete() {
   await formStore.destroyForm(selectedForm.value);
   push.success({
     title: `Deleted`,
-    message: `The form ${forms.title} was deleted`
+    message: `The form was successfully deleted`
   });
   showDelete.value = false;
   await formStore.getForms();

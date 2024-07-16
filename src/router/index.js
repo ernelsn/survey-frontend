@@ -29,10 +29,7 @@ const routes = [
       { path: "/dashboard", name: "Dashboard", component: Dashboard },
       { path: "/forms", name: "Forms", component: Forms },
       { path: "/forms/create", name: "FormCreate", component: FormsModule },
-      { 
-        path: '/forms/edit/:id?', 
-        name: 'FormEdit', 
-        component: FormsModule, 
+      { path: '/forms/edit/:id?', name: 'FormEdit', component: FormsModule, 
         props: route => ({ 
           id: route.params.id, 
           draftId: route.query.draft || route.query.draftId 
