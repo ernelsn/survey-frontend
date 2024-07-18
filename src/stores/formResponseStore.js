@@ -60,8 +60,13 @@ export const useFormResponseStore = defineStore('response', {
         this.loadResults = false;
       }
     },
+
+    async deleteResponse(formId, responseId) {
+      const response = await formResponseService.deleteResponse(formId, responseId);
+      return response;
+    },
   },
   persist: {
-    paths: ['endTime', 'started', 'ended', 'results'],
+    paths: ['endTime', 'started', 'ended'],
   },
 });

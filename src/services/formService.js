@@ -4,11 +4,19 @@ class FormService {
   }
 
   async getForms(url = "/api/v1/forms") {
-    return await this.client.get(url);
+    try {
+      return await this.client.get(url);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getForm(id) {
-    return await this.client.get(`/api/v1/forms/${id}`);
+    try {
+      return await this.client.get(`/api/v1/forms/${id}`);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getFormBySlug(slug) {
@@ -16,10 +24,14 @@ class FormService {
   }
 
   async storeForm(form) {
-    if (form.id) {
-      return await this.client.patch(`/api/v1/forms/${form.id}`, form);
-    } else {
-      return await this.client.post("/api/v1/forms", form);
+    try {
+      if (form.id) {
+        return await this.client.patch(`/api/v1/forms/${form.id}`, form);
+      } else {
+        return await this.client.post("/api/v1/forms", form);
+      }
+    } catch (error) {
+      throw error;
     }
   }
 

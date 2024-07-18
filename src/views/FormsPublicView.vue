@@ -1,16 +1,11 @@
 <template>
-  <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
+  <div v-if="formStore.error">
+    <Forbidden v-if="formStore.error.status == 403"/>
+    <NotFound v-if="formStore.error.status == 404"/>
+  </div>
+  <main v-else class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
     <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
       <div class="py-5 px-8">
-        <div v-if="formStore.error" class="error-container">
-          <h1 class="mt-6 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            {{ formStore.currentForm.data.title }}
-          </h1>
-          <p class="mt-6 text-base leading-7 text-gray-600">
-            {{ errorMessage }}
-          </p>
-        </div>
-
         <div v-if="loading" class="flex justify-center">
           <span class="loading loading-dots loading-lg mr-1"></span>
         </div>
@@ -50,7 +45,8 @@
           </div>
         </div>
 
-        <form v-else-if="!formResponseStore.ended && !formStore.error" @submit.prevent="submitForm" class="container mx-auto">
+        <form v-else-if="!formResponseStore.ended && !formStore.error" @submit.prevent="submitForm"
+          class="container mx-auto">
           <div class="grid items-center mb-5">
             <div class="hero">
               <div class="hero-content flex-col lg:flex-row-reverse">
@@ -130,6 +126,8 @@ import { useFormResponseStore } from "../stores/formResponseStore";
 import FormViewer from "../components/viewer/FormViewer.vue";
 import TimerExpiredDialog from "../components/TimerExpiredDialog.vue";
 import ImageElement from "../components/ImageElement.vue";
+import Forbidden from "../components/errors/Forbidden.vue";
+import NotFound from "../components/errors/NotFound.vue";
 
 const route = useRoute();
 const formStore = useFormStore();
@@ -141,30 +139,14 @@ const form = computed(() => formStore.currentForm.data);
 const results = computed(() => formResponseStore.results);
 const loadResult = computed(() => formResponseStore.loadResults);
 
-const errorMessage = computed(() => {
-  if (!formStore.error) return '';
-
-  const title = formStore.currentForm.data.title;
-
-  switch (formStore.error) {
-    case 'Form not found':
-      return `The form "${title}" could not be found. Please check the URL and try again.`;
-    case 'Form has expired':
-      return `The form "${title}" has expired and is no longer accepting responses.`;
-    case 'You have already submitted a response to this form.':
-      return `You have already submitted a response to the form "${title}". Multiple submissions are not allowed.`;
-    case 'Form is not accepting responses':
-      return `The form "${title}" is no longer accepting responses. Try contacting the owner of the form if you think this is a mistake.`;
-    default:
-      return formStore.error || 'An error occurred while loading the form. Please try again later.';
-  }
-});
-
 let timerId = null;
 const responses = ref({});
 const hasExpired = ref(false);
 
-formStore.getFormBySlug(route.params.slug);
+
+onMounted(async () => {
+  await formStore.getFormBySlug(route.params.slug);
+});
 
 const start = () => {
   formResponseStore.started = true;

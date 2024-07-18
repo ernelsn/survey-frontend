@@ -17,7 +17,8 @@
                             </h2>
                         </div>
                         <div class="mt-5 flex items-center lg:ml-4 lg:mt-0">
-                            <span class="mr-3">{{ isAccepting ? 'Accepting responses' : 'No longer accepting responses' }}</span>
+                            <span class="mr-3">{{ isAccepting ? 'Accepting responses' : 'No longer accepting responses'
+                                }}</span>
                             <span class="sm:block">
                                 <input type="checkbox" class="peer sr-only opacity-0" id="toggle"
                                     @change="toggleAcceptance" :checked="isAccepting" />
@@ -64,8 +65,14 @@
 
                                     </td>
                                     <th>
-                                        <button class="btn btn-ghost btn-xs"
-                                            @click="showDetails(response.id)">Details</button>
+                                        <button @click="openDeleteResponseDialog(response.id)" type="button"
+                                            class="btn btn-circle btn-outline btn-error btn-xs">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     </th>
                                 </tr>
                             </tbody>
@@ -82,16 +89,19 @@
                 </div>
             </div>
         </div>
+        <DeleteFormDialog :isOpened="showDeleteDialog" @toggle="(value) => showDeleteDialog = value"
+            :on-delete="handleDeleteResponse" :title="dialogTitle" :message="dialogMessage" />
     </PageComponent>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { push } from 'notivue';
 import { useFormResponseStore } from '../stores/formResponseStore';
 import { useFormStore } from "../stores/formStore";
 import PageComponent from "../components/PageComponent.vue";
-import { push } from 'notivue';
+import DeleteFormDialog from "../components/DeleteFormDialog.vue";
 
 const route = useRoute();
 const formResponseStore = useFormResponseStore();
@@ -99,8 +109,12 @@ const formStore = useFormStore();
 const loading = computed(() => formResponseStore.currentForm.loading);
 const formResponses = computed(() => formResponseStore.formResponses);
 const formResponsesCount = computed(() => formResponseStore.formResponsesCount);
-
+const showDeleteDialog = ref(false);
 const isAccepting = ref(false);
+const responseToDeleteId = ref(null);
+
+const dialogTitle = computed(() => 'Delete Response');
+const dialogMessage = computed(() => 'Are you sure you want to delete this response? All of the data pertaining to this response will be permanently removed. This action cannot be undone.');
 
 const responseMessage = computed(() => {
     if (formResponsesCount.value === 0) {
@@ -111,22 +125,48 @@ const responseMessage = computed(() => {
 });
 
 onMounted(async () => {
-  await formResponseStore.getFormResponse(route.params.id);
-  isAccepting.value = formResponseStore.currentForm.data?.is_accepting ?? false;
+    await formResponseStore.getFormResponse(route.params.id);
+    isAccepting.value = formResponseStore.currentForm.data?.is_accepting ?? false;
 });
 
+function openDeleteResponseDialog(responseId) {
+    responseToDeleteId.value = responseId;
+    showDeleteDialog.value = true;
+}
+
 async function toggleAcceptance() {
-  try {
-    isAccepting.value = !isAccepting.value;
-    const response = await formStore.updateFormResponseAcceptance(route.params.id);
-    push.info({
-        message: `Form configuration updated`
-    });
-    if (response && typeof response.is_accepting !== 'undefined') {
-      isAccepting.value = response.is_accepting;
+    try {
+        isAccepting.value = !isAccepting.value;
+        const response = await formStore.updateFormResponseAcceptance(route.params.id);
+        push.info({
+            message: `Form configuration updated`
+        });
+        if (response && typeof response.is_accepting !== 'undefined') {
+            isAccepting.value = response.is_accepting;
+        }
+    } catch (error) {
+        isAccepting.value = !isAccepting.value;
     }
-  } catch (error) {
-    isAccepting.value = !isAccepting.value;
-  }
+}
+
+async function handleDeleteResponse() {
+    if (!responseToDeleteId.value) return;
+    try {
+        const formId = route.params.id;
+        await formResponseStore.deleteResponse(formId, responseToDeleteId.value);
+        push.success({
+            title: 'Response deleted',
+            message: 'The response was successfully deleted'
+        });
+        await formResponseStore.getFormResponse(formId);
+    } catch (error) {
+        push.error({
+            title: 'Error',
+            message: 'Failed to delete the response. Please try again.'
+        });
+    } finally {
+        showDeleteDialog.value = false;
+        responseToDeleteId.value = null;
+    }
 }
 </script>

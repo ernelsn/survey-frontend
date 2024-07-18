@@ -16,6 +16,10 @@ class FormService {
     async showResults(id) {
       return await this.client.get(`/api/v1/forms/${id}/responses/results`);
     }
+
+    async deleteResponse(formId, responseId) {
+      return await this.client.delete(`/api/v1/forms/${formId}/responses/${responseId}`);
+    }
   }
   
   export default FormService;

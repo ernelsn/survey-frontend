@@ -1,10 +1,11 @@
-import { defineStore } from 'pinia';
-import axiosClient from '../axios';
-import FormService from '../services/formService';
+import { defineStore } from "pinia";
+import axiosClient from "../axios";
+import FormService from "../services/formService";
+import router from "../router";
 
 const formService = new FormService(axiosClient);
 
-export const useFormStore = defineStore('form', {
+export const useFormStore = defineStore("form", {
   state: () => ({
     forms: {
       loading: false,
@@ -17,15 +18,18 @@ export const useFormStore = defineStore('form', {
       sectionLoading: false,
     },
     questionCorrectOptions: {},
-    questionTypes: ["short answer", "paragraph", "multiple choice", "checkbox", "dropdown", "linear scale"],
+    questionTypes: [
+      "short answer",
+      "paragraph",
+      "multiple choice",
+      "checkbox",
+      "dropdown",
+      "linear scale",
+    ],
     error: null,
   }),
 
   actions: {
-    setError(error) {
-      this.error = error;
-    },
-
     clearError() {
       this.error = null;
     },
@@ -34,15 +38,65 @@ export const useFormStore = defineStore('form', {
       this.currentForm.data = draftData;
     },
 
-    async getForms(url = '/api/v1/forms') {
+    setError(error) {
+      this.error = {
+        status: error.status,
+        title: error.title || "Error",
+        message: error.message,
+        validation: error.validation || {},
+      };
+    },
+
+    handleNotFound(err) {
+      this.setError({
+        status: 404,
+        title: "Form not found",
+        message: "Sorry, we couldn't find the form you're looking for.",
+        validation: {},
+      });
+    },
+
+    handleExpired(err) {
+      this.setError({
+        status: 410,
+        title: "Access has expired",
+        message: "This form is no longer available.",
+        validation: {},
+      });
+    },
+    
+    handleAlreadySubmitted(err) {
+      this.setError({
+        status: 403,
+        title: "You've already responded",
+        message: "You can fill out this form only once.",
+        validation: {},
+      });
+    },
+
+    async getForms(url = "/api/v1/forms") {
       this.forms.loading = true;
-      this.setError(null);
+      this.clearError();
       try {
         const response = await formService.getForms(url);
         this.forms.data = response.data.data;
         this.forms.links = response.data.meta.links;
       } catch (error) {
-        this.setError(error);
+        if (error.response) {
+          this.setError({
+            status: error.response.status,
+            message: error.response.data.message || 'An error occurred while fetching forms',
+            validation: error.response.data.errors || {},
+          });
+        } else if (error.request) {
+          this.setError({
+            message: 'No response received from the server. Please check your network connection.',
+          });
+        } else {
+          this.setError({
+            message: error.message || 'An error occurred while setting up the request',
+          });
+        }
       } finally {
         this.forms.loading = false;
       }
@@ -50,13 +104,18 @@ export const useFormStore = defineStore('form', {
 
     async getForm(id) {
       this.currentForm.loading = true;
-      this.setError(null);
+      this.clearError();
       try {
         const response = await formService.getForm(id);
         this.currentForm.data = response.data.data;
         return response;
       } catch (error) {
-        this.setError(error);
+        this.setError({
+          status: error.response?.status,
+          title: "Error Fetching Form",
+          message: error.response?.data?.message || "An error occurred while fetching the form",
+          validation: error.response?.data?.errors || {},
+        });
         throw error;
       } finally {
         this.currentForm.loading = false;
@@ -65,21 +124,22 @@ export const useFormStore = defineStore('form', {
 
     async getFormBySlug(slug) {
       this.currentForm.loading = true;
-      this.setError(null);
-      this.currentForm.data = { title: '' };
-    
+      this.clearError();
+      this.currentForm.data = { title: "" };
       try {
         const response = await formService.getFormBySlug(slug);
         this.currentForm.data = response.data.data;
       } catch (err) {
-        if (err.response && err.response.data) {
-          this.setError(err.response.data.message);
-          this.currentForm.data.title = err.response.data.title;
-        } else if (err.request) {
-          this.setError('No response received from the server');
+        if (err.status === 404) {
+          this.handleNotFound(err);
+        } else if (err.status === 410) {
+          this.handleExpired(err);
+        } else if (err.status === 403) {
+          this.handleAlreadySubmitted(err);
         } else {
-          this.setError('An error occurred while setting up the request');
+          this.setError(err);
         }
+        this.currentForm.data.title = err.original?.response?.data?.title || "";
       } finally {
         this.currentForm.loading = false;
       }
@@ -98,8 +158,13 @@ export const useFormStore = defineStore('form', {
           this.currentForm.data = response.data.data;
         }
         return response;
-      } catch(error) {
-        this.setError(error);
+      } catch (error) {
+        this.setError({
+          status: error.response?.status,
+          title: "Error Saving Form",
+          message: error.response?.data?.message || "An error occurred while saving the form",
+          validation: error.response?.data?.errors || {},
+        });
       } finally {
         this.currentForm.loading = false;
         this.currentForm.sectionLoading = false;
@@ -109,10 +174,10 @@ export const useFormStore = defineStore('form', {
     async updateFormResponseAcceptance(id) {
       try {
         const response = await formService.updateFormResponseAcceptance(id);
-        return response.data
+        return response.data;
       } catch (error) {
         this.setError(error);
-        throw error
+        throw error;
       }
     },
 

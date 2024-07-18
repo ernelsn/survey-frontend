@@ -313,23 +313,19 @@ import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { push } from 'notivue';
 
-// Stores
 import { useFormStore } from "../stores/formStore";
 import { useDraftStore } from "../stores/draftStore";
 import { useUploadStore } from "../stores/uploadStore";
 
-// Components
 import PageComponent from "../components/PageComponent.vue";
 import FormEditor from "../components/editor/FormEditor.vue";
 import DeleteFormDialog from "../components/DeleteFormDialog.vue";
 import ImageElement from "../components/ImageElement.vue";
 
-// Plugins
 import vueFilePond from 'vue-filepond';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 
-// Styles
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
@@ -537,7 +533,6 @@ const storeForm = async () => {
         await draftStore.deleteDraft(draftStore.draftId);
       }
 
-      updateModelWithResponseData(data);
       draftStore.setFormState('submitted');
       draftStore.clearDraft();
 
@@ -546,6 +541,8 @@ const storeForm = async () => {
         title: `${action}`,
         message: `The form was successfully ${action.toLowerCase().trim()}`
       });
+
+      updateModelWithResponseData(data);
     }
   } catch (error) {
     push.error({

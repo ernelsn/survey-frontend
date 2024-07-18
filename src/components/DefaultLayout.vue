@@ -12,16 +12,17 @@
               <div class="ml-10 flex items-baseline space-x-4">
                 <router-link v-for="item in navigation" :key="item.name" :to="item.to"
                   active-class="bg-gray-900 text-white" :class="[
-                    this.$route.name === item.to.name
+                    route.name === item.to.name
                       ? ''
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white',
                     'px-3 py-2 rounded-md text-sm font-medium',
-                  ]">{{ item.name }}
+                  ]">
+                  {{ item.name }}
                 </router-link>
               </div>
             </div>
           </div>
-          <div class="hidden md:block">
+          <div v-if="user" class="hidden md:block">
             <div class="ml-4 flex items-center md:ml-6">
               <!-- Profile dropdown -->
               <Menu as="div" class="ml-3 relative">
@@ -78,14 +79,15 @@
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <router-link v-for="item in navigation" :key="item.name" :to="item.to" active-class="bg-gray-900 text-white"
             :class="[
-              this.$route.name === item.to.name
+              route.name === item.to.name
                 ? ''
                 : 'text-gray-300 hover:bg-gray-700 hover:text-white',
               'block px-3 py-2 rounded-md text-base font-medium',
-            ]">{{ item.name }}
+            ]">
+            {{ item.name }}
           </router-link>
         </div>
-        <div class="pt-4 pb-3 border-t border-gray-700">
+        <div v-if="user" class="pt-4 pb-3 border-t border-gray-700">
           <div class="flex items-center px-5">
             <div class="flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="white">
@@ -115,7 +117,7 @@
     <Notivue v-slot="item">
       <NotivueSwipe :item="item">
         <Notification :item="item">
-          <NotificationProgress :item="item"/>
+          <NotificationProgress :item="item" />
         </Notification>
       </NotivueSwipe>
     </Notivue>
@@ -124,15 +126,16 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue';
+import { useRoute } from "vue-router";
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { Notivue, Notification, NotivueSwipe, NotificationProgress} from 'notivue';
-
-import { computed } from 'vue';
-
-import { useRouter } from "vue-router";
+import { Notivue, Notification, NotivueSwipe, NotificationProgress } from 'notivue';
 import { useAuthStore } from '../stores/authStore';
+
+const route = useRoute();
+const authStore = useAuthStore();
 
 const navigation = [
   { name: "Dashboard", to: { name: "Dashboard" } },
@@ -140,42 +143,11 @@ const navigation = [
   { name: "Forms", to: { name: "Forms" } },
 ];
 
-export default {
-  components: {
-    Disclosure,
-    DisclosureButton,
-    DisclosurePanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-    Bars3Icon,
-    XMarkIcon,
-    Notivue,
-    Notification,
-    NotivueSwipe,
-    NotificationProgress,
-  },
-  setup() {
-    const router = useRouter();
-    const authenticate = useAuthStore();
+const user = computed(() => authStore.user);
 
-    function logout() {
-      authenticate.logout()
-        .then(() => {
-          router.push({
-            name: "Login",
-          });
-        });
-    }
+function logout() {
+  authStore.logout();
+}
 
-    authenticate.fetchUser();
-
-    return {
-      user: computed(() => authenticate.user),
-      navigation,
-      logout,
-    };
-  },
-};
+authStore.fetchUser();
 </script>

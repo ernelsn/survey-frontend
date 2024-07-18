@@ -15,7 +15,7 @@ const FormsPublicView = () => import("../views/FormsPublicView.vue");
 
 const Learnings = () => import("../views/Learnings.vue");
 
-const NotFound = () => import("../views/NotFound.vue");
+const NotFound = () => import("../components/errors/NotFound.vue");
 
 import { useAuthStore } from '../stores/authStore';
 

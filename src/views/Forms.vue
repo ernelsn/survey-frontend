@@ -112,7 +112,7 @@ const forms = computed(() => formStore.forms);
 onMounted(() => {
   formStore.getForms();
   draftStore.getFormDrafts();
-})
+});
 
 function showDeleteDialog(id) {
   showDelete.value = true;
