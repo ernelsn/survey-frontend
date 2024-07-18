@@ -115,7 +115,6 @@ export const useDraftStore = defineStore("draft", {
     async createOrUpdateDraft(formData) {
       if (this.formState === 'submitted') {
         this.formState = 'editing';
-        return;
       }
       await this.saveAsDraft(formData);
     },
