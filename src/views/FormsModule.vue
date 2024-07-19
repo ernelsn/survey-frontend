@@ -389,8 +389,9 @@ const model = ref({
 });
 
 const isSubmitting = ref(false);
-const initialModelState = ref({});
 const formLoaded = ref(false);
+const initialModelState = ref({});
+const lastSubmittedTime = ref(0);
 let saveTimeout;
 
 onMounted(async () => {
@@ -509,6 +510,8 @@ function isEqual(obj1, obj2) {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
 
+const DRAFT_SAVE_DELAY = 7000; // 7 seconds in milliseconds
+
 watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
   if (!formLoaded.value) return;
 
@@ -522,6 +525,11 @@ watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
       draftStore.setFormTitle(newVal.title);
       
       saveTimeout = setTimeout(async () => {
+        // Check if enough time has passed since the last submission
+        if (Date.now() - lastSubmittedTime.value < DRAFT_SAVE_DELAY) {
+          return;
+        }
+        
         try {
           await draftStore.createOrUpdateDraft(newVal);
           push.info({
@@ -534,7 +542,7 @@ watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
             message: 'Failed to save draft. Will try again later.',
           });
         }
-      }, 7 * 1000); // 7 second debounce
+      }, DRAFT_SAVE_DELAY);
     }
   }
 }, { deep: true });
@@ -559,6 +567,7 @@ const storeForm = async () => {
       });
       updateModelWithResponseData(data);
       initialModelState.value = JSON.parse(JSON.stringify(model.value)); // Update initial state
+      lastSubmittedTime.value = Date.now(); // Set the submission timestamp
     }
   } catch (error) {
     push.error({
