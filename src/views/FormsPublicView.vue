@@ -1,7 +1,7 @@
 <template>
   <div v-if="formStore.error">
-    <Forbidden v-if="formStore.error.status == 403"/>
-    <NotFound v-if="formStore.error.status == 404"/>
+    <Forbidden v-if="formStore.error.status == 403" />
+    <NotFound v-if="formStore.error.status == 404" />
   </div>
   <main v-else class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
     <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
@@ -60,10 +60,10 @@
                 <div>
                   <h1 class="text-5xl font-bold">{{ form.title }}</h1>
                   <p class="py-6" v-html="form.description"></p>
-                  <button v-if="!formResponseStore.started && !formStore.error" class="btn btn-neutral"
-                    @click="start">Start</button>
+                  <button v-if="!formResponseStore.started && !formStore.error && !shouldStartAutomatically"
+                    class="btn btn-neutral" @click="start">Start</button>
 
-                  <div v-if="formResponseStore.started" class="flex gap-5">
+                  <div v-if="formResponseStore.started && form.time_limit" class="flex gap-5">
                     <div>
                       <span class="countdown font-mono text-4xl">
                         {{ timeLeft.hours }}
@@ -133,19 +133,21 @@ const route = useRoute();
 const formStore = useFormStore();
 const formResponseStore = useFormResponseStore();
 
-const loading = computed(() => formStore.currentForm.loading);
-const form = computed(() => formStore.currentForm.data);
-
-const results = computed(() => formResponseStore.results);
-const loadResult = computed(() => formResponseStore.loadResults);
-
 let timerId = null;
 const responses = ref({});
 const hasExpired = ref(false);
 
+const loading = computed(() => formStore.currentForm.loading);
+const form = computed(() => formStore.currentForm.data);
+const results = computed(() => formResponseStore.results);
+const loadResult = computed(() => formResponseStore.loadResults);
+const shouldStartAutomatically = computed(() => !form.value.time_limit);
 
 onMounted(async () => {
   await formStore.getFormBySlug(route.params.slug);
+  if (shouldStartAutomatically.value) {
+    start();
+  }
 });
 
 const start = () => {
@@ -178,14 +180,16 @@ const start = () => {
     clearInterval(timerId);
   }
 
-  timerId = setInterval(() => {
-    formResponseStore.now += 1000;
-    const timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
-    if (timeLeft <= 0) {
-      clearInterval(timerId);
-      hasExpired.value = true;
-    }
-  }, 1000);
+  if (formResponseStore.endTime) {
+    timerId = setInterval(() => {
+      formResponseStore.now += 1000;
+      const timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        hasExpired.value = true;
+      }
+    }, 1000);
+  }
 };
 
 const timeLeft = computed(() => {
