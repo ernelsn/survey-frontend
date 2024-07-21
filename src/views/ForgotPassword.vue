@@ -1,8 +1,8 @@
 <template>
-  <form class="mx-auto max-w-md bg-slate-100 p-4 mt-12 rounded-lg" @submit.prevent="authenticate.forgotPassword(form)">
+  <form class="mx-auto max-w-md bg-slate-100 p-4 mt-12 rounded-lg" @submit.prevent="auth.forgotPassword(form)">
     <h3 class="font-bold">Forgot password</h3>
-    <div class="m-2 p-2 text-green-900 font-semibold bg-green-300 rounded-md" v-if="authenticate.status">
-      {{ authenticate.status }}
+    <div class="m-2 p-2 text-green-900 font-semibold bg-green-300 rounded-md" v-if="auth.status">
+      {{ auth.status }}
     </div>
     <div class="my-6">
       <label for="email" class="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-300">Your email</label>
@@ -22,9 +22,10 @@
           dark:focus:border-blue-500
           dark:focus:ring-blue-500
         " />
-      <div v-if="authenticate.errors.email && authenticate.errors.email.length > 0" class="flex">
-        <span class="text-red-400 text-sm m-2 p-2">
-          {{ authenticate.errors.email[0] }}</span>
+      <div v-if="auth.error">
+        <div v-if="auth.error.validation.email" class="label">
+          <span class="label-text-alt text-red-400 text-sm">{{ auth.error.validation.email }}</span>
+        </div>
       </div>
     </div>
     <button class="
@@ -49,7 +50,7 @@
 import { ref } from "vue";
 import { useAuthStore } from '../stores/authStore';
 
-const authenticate = useAuthStore();
+const auth = useAuthStore();
 
 const form = ref({
   email: ""
