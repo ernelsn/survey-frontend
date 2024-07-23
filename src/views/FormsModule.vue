@@ -240,6 +240,19 @@
                       class="textarea textarea-bordered textarea-xs w-full py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 sm:text-sm sm:leading-6"
                       placeholder="Description (optional)"></textarea>
                   </div>
+                  <div class="mt-5 card-actions justify-end">
+                    <div class="flex items-center lg:ml-4 lg:mt-0">
+                      <span class="mr-3 text-sm leading-6 font-medium text-gray-900">Make all questions required</span>
+                      <span class="sm:block">
+                        <input type="checkbox" class="peer sr-only opacity-0" id="toggle"
+                          @change="toggleMakeAllQuestionsRequired" :checked="allQuestionsRequired" />
+                        <label for="toggle"
+                          class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
+                          <span class="sr-only">Enable</span>
+                        </label>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="mt-3 card bg-base-100 shadow-xl">
@@ -408,7 +421,7 @@ onMounted(async () => {
   } else {
     draftStore.setFormState('unsaved');
   }
-  
+
   initialModelState.value = JSON.parse(JSON.stringify(model.value));
   formLoaded.value = true;
 });
@@ -463,7 +476,8 @@ const addQuestion = (index, sectionIndex) => {
     question: "",
     description: null,
     data: {},
-    points: model.value.points || null
+    points: model.value.default_points || null,
+    is_required: allQuestionsRequired.value
   };
   model.value.sections[sectionIndex].questions.splice(index, 0, newQuestion);
   draftStore.setFormState('editing');
@@ -473,15 +487,34 @@ const addQuestion = (index, sectionIndex) => {
   });
 };
 
-const questionChange = (question, sectionIndex, questionIndex) => {
-  if (question.data.options) {
-    question.data.options = [...question.data.options];
-  }
-  if (question.points === undefined || question.points === null) {
-    question.points = model.value.points || null;
-  }
-  model.value.sections[sectionIndex].questions = model.value.sections[sectionIndex].questions.map((q, index) =>
-    index === questionIndex ? { ...question } : q
+const allQuestionsRequired = ref(false);
+const toggleMakeAllQuestionsRequired = () => {
+  allQuestionsRequired.value = !allQuestionsRequired.value;
+  model.value.sections = model.value.sections.map(section => ({
+    ...section,
+    questions: section.questions.map(question => ({
+      ...question,
+      is_required: allQuestionsRequired.value
+    }))
+  }));
+};
+
+const questionChange = (updatedQuestion, sectionIndex, questionIndex) => {
+  model.value.sections[sectionIndex].questions[questionIndex] = {
+    ...updatedQuestion,
+    data: {
+      ...(updatedQuestion.data || {}),
+      options: updatedQuestion.data?.options ? [...updatedQuestion.data.options] : undefined
+    },
+    points: updatedQuestion.points ?? model.value.default_points ?? null
+  };
+
+  updateAllQuestionsRequiredState();
+};
+
+const updateAllQuestionsRequiredState = () => {
+  allQuestionsRequired.value = model.value.sections.every(section =>
+    section.questions.every(question => question.is_required)
   );
 };
 
@@ -523,13 +556,13 @@ watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
     if (draftStore.formState !== 'submitted') {
       clearTimeout(saveTimeout);
       draftStore.setFormTitle(newVal.title);
-      
+
       saveTimeout = setTimeout(async () => {
         // Check if enough time has passed since the last submission
         if (Date.now() - lastSubmittedTime.value < DRAFT_SAVE_DELAY) {
           return;
         }
-        
+
         try {
           await draftStore.createOrUpdateDraft(newVal);
           push.info({
