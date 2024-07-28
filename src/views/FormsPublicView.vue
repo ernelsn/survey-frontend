@@ -119,7 +119,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, watchEffect } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { useFormStore } from "../stores/formStore";
 import { useFormResponseStore } from "../stores/formResponseStore";

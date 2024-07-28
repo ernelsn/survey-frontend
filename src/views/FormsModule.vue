@@ -325,7 +325,6 @@ import { v4 as uuidv4 } from "uuid";
 import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { push } from 'notivue';
-import { storeToRefs } from 'pinia';
 
 import { useFormStore } from "../stores/formStore";
 import { useDraftStore } from "../stores/draftStore";
@@ -540,12 +539,11 @@ const updateFormTitle = (newTitle) => {
 
 watch(() => model.value.default_points, updateQuestionsWithDefaultPoints);
 
-function isEqual(obj1, obj2) {
+const isEqual = (obj1, obj2) => {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
 
 const DRAFT_SAVE_DELAY = 7000; // 7 seconds in milliseconds
-
 watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
   if (!formLoaded.value) return;
 
@@ -604,7 +602,10 @@ const storeForm = async () => {
       lastSubmittedTime.value = Date.now(); // Set the submission timestamp
     }
   } catch (error) {
-    // handle error;
+    push.error({
+      title: 'Submission failed',
+      message: 'Failed to submit the form. Please try again.',
+    });
   } finally {
     isSubmitting.value = false;
   }

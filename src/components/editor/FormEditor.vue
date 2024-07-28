@@ -20,7 +20,6 @@
       </div>
       <div v-if="errors.question" class="mt-1 text-sm text-red-400">
         {{ errors.question }}
-        <span style="display: none;">{{ console.log('Rendering error for question:', errors.question) }}</span>
       </div>
     </div>
 
@@ -163,7 +162,7 @@
 
 <script setup>
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useFormStore } from "../../stores/formStore";
 import { useUploadStore } from "../../stores/uploadStore";
 
@@ -191,10 +190,6 @@ const props = defineProps({
   sectionIndex: Number,
   errors: Object,
 });
-
-// watch(() => props.errors, (newErrors) => {
-//   console.log(`Errors for question ${props.questionIndex} in section ${props.sectionIndex}:`, newErrors);
-// }, { deep: true });
 
 const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "questionDescriptionAsImage"]);
 
