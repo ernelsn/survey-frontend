@@ -20,6 +20,7 @@
       </div>
       <div v-if="errors.question" class="mt-1 text-sm text-red-400">
         {{ errors.question }}
+        <span style="display: none;">{{ console.log('Rendering error for question:', errors.question) }}</span>
       </div>
     </div>
 
@@ -147,7 +148,7 @@
       <div class="flex items-center lg:ml-4 lg:mt-0 justify-end">
         <span class="mr-3 text-sm leading-6 font-medium text-gray-900">Required</span>
         <span class="sm:block">
-          <input type="checkbox" class="peer sr-only opacity-0" :id="'toggle-' + questionIndex" 
+          <input type="checkbox" class="peer sr-only opacity-0" :id="'toggle-' + questionIndex"
             @change="toggleMakeQuestionRequired" :checked="question.is_required" />
           <label :for="'toggle-' + questionIndex"
             class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
@@ -162,7 +163,7 @@
 
 <script setup>
 import { v4 as uuidv4 } from "uuid";
-import { computed, ref, defineProps, defineEmits } from "vue";
+import { computed, ref, watch } from "vue";
 import { useFormStore } from "../../stores/formStore";
 import { useUploadStore } from "../../stores/uploadStore";
 
@@ -190,6 +191,10 @@ const props = defineProps({
   sectionIndex: Number,
   errors: Object,
 });
+
+// watch(() => props.errors, (newErrors) => {
+//   console.log(`Errors for question ${props.questionIndex} in section ${props.sectionIndex}:`, newErrors);
+// }, { deep: true });
 
 const emit = defineEmits(["change", "addQuestion", "deleteQuestion", "scrollToReference", "questionDescriptionAsImage"]);
 
@@ -250,9 +255,9 @@ function dataChange() {
 }
 
 const toggleMakeQuestionRequired = () => {
-  emit('change', { 
-    ...props.question, 
-    is_required: !props.question.is_required 
+  emit('change', {
+    ...props.question,
+    is_required: !props.question.is_required
   }, props.sectionIndex, props.questionIndex);
 };
 

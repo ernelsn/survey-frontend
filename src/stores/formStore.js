@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import axiosClient from "../axios";
 import FormService from "../services/formService";
-import router from "../router";
 
 const formService = new FormService(axiosClient);
 
@@ -41,9 +40,9 @@ export const useFormStore = defineStore("form", {
     setError(error) {
       this.error = {
         status: error.status,
-        title: error.title || "Error",
+        title: error.title,
         message: error.message,
-        validation: error.validation || {},
+        validation: error.validation,
       };
     },
 
@@ -129,17 +128,17 @@ export const useFormStore = defineStore("form", {
       try {
         const response = await formService.getFormBySlug(slug);
         this.currentForm.data = response.data.data;
-      } catch (err) {
-        if (err.status === 404) {
-          this.handleNotFound(err);
-        } else if (err.status === 410) {
-          this.handleExpired(err);
-        } else if (err.status === 403) {
-          this.handleAlreadySubmitted(err);
+      } catch (error) {
+        if (error.status === 404) {
+          this.handleNotFound(error);
+        } else if (error.status === 410) {
+          this.handleExpired(error);
+        } else if (error.status === 403) {
+          this.handleAlreadySubmitted(error);
         } else {
-          this.setError(err);
+          this.setError(error);
         }
-        this.currentForm.data.title = err.original?.response?.data?.title || "";
+        this.currentForm.data.title = error.original?.response?.data?.title || "";
       } finally {
         this.currentForm.loading = false;
       }
@@ -147,6 +146,7 @@ export const useFormStore = defineStore("form", {
 
     async storeForm(form) {
       this.currentForm.loading = true;
+      this.clearError();
       let response;
       try {
         if (form.id) {
@@ -160,10 +160,10 @@ export const useFormStore = defineStore("form", {
         return response;
       } catch (error) {
         this.setError({
-          status: error.response?.status,
-          title: "Error Saving Form",
-          message: error.response?.data?.message || "An error occurred while saving the form",
-          validation: error.response?.data?.errors || {},
+          status: error.status,
+          title: error.status === 422 ? "Validation Error" : "Error occurred",
+          message: error.message || "An unexpected error occurred",
+          validation: error.validation || {},
         });
       } finally {
         this.currentForm.loading = false;

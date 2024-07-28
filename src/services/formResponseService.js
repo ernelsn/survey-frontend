@@ -8,9 +8,13 @@ class FormService {
     }
   
     async storeFormResponse(formId, responses) {
-      return await this.client.post(`/api/v1/forms/${formId}/responses`, {
-        responses,
-      });
+      try {
+        return await this.client.post(`/api/v1/forms/${formId}/responses`, {
+          responses,
+        });
+      } catch(error) {
+        throw error;
+      }
     }
   
     async showResults(id) {

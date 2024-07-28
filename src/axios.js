@@ -29,6 +29,7 @@ axiosClient.interceptors.response.use(
           for (let field in err.response.data.errors) {
             error.validation[field] = err.response.data.errors[field][0];
           }
+          error.message = err.response.data.message || "Validation failed";
           break;
         case 500:
           error.message = "Something went really bad. Sorry.";

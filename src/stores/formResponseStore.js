@@ -9,7 +9,6 @@ export const useFormResponseStore = defineStore('response', {
     currentForm: {
       data: null,
       loading: false,
-      error: null,
     },
     results: {
       overall_results: {
@@ -19,6 +18,7 @@ export const useFormResponseStore = defineStore('response', {
       section_results: [],
     },
     loadResults: false,
+    error: null,
     startTime: null,
     endTime: null,
     started: false,
@@ -31,22 +31,45 @@ export const useFormResponseStore = defineStore('response', {
   },
 
   actions: {
+    setError(error) {
+      this.error = {
+        status: error.status,
+        title: error.title,
+        message: error.message,
+        validation: error.validation,
+      };
+    },
+
+    clearError() {
+      this.error = null;
+    },
+
     async getFormResponse(id) {
       this.currentForm.loading = true;
-      this.currentForm.error = null;
+      this.error = null;
       try {
         const response = await formResponseService.getFormResponse(id);
         this.currentForm.data = response.data;
       } catch (error) {
         console.error('Error fetching form response:', error);
-        this.currentForm.error = error.message || 'An error occurred while fetching the form response.';
+        this.error = error.message || 'An error occurred while fetching the form response.';
       } finally {
         this.currentForm.loading = false;
       }
     },
 
     async storeFormResponse({formId, responses}) {
-      return formResponseService.storeFormResponse(formId, responses);
+      this.clearError();
+      try {
+        return formResponseService.storeFormResponse(formId, responses);
+      } catch(error) {
+        this.setError({
+          status: error.status,
+          title: error.status === 422 ? "Validation Error" : "Error occurred",
+          message: error.message || "An unexpected error occurred",
+          validation: error.validation || {},
+        });
+      }
     },
 
     async showResults(id) {

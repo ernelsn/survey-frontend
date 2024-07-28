@@ -325,6 +325,7 @@ import { v4 as uuidv4 } from "uuid";
 import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { push } from 'notivue';
+import { storeToRefs } from 'pinia';
 
 import { useFormStore } from "../stores/formStore";
 import { useDraftStore } from "../stores/draftStore";
@@ -582,9 +583,9 @@ watch(() => JSON.parse(JSON.stringify(model.value)), (newVal) => {
 
 const storeForm = async () => {
   isSubmitting.value = true;
-  const action = model.value.id ? "Updated" : "Created";
-  const formData = prepareFormData();
   try {
+    const action = model.value.id ? "Updated" : "Created";
+    const formData = prepareFormData();
     const response = await formStore.storeForm(formData);
     if (response?.data) {
       const { data } = response.data;
@@ -603,10 +604,7 @@ const storeForm = async () => {
       lastSubmittedTime.value = Date.now(); // Set the submission timestamp
     }
   } catch (error) {
-    push.error({
-      title: 'Submission failed',
-      message: 'Failed to submit the form. Please try again.',
-    });
+    // handle error;
   } finally {
     isSubmitting.value = false;
   }
@@ -710,7 +708,8 @@ const getQuestionErrors = (sectionIndex, questionIndex) => {
   const prefix = `sections.${sectionIndex}.questions.${questionIndex}.`;
   for (const [key, value] of Object.entries(formStore.error.validation)) {
     if (key.startsWith(prefix)) {
-      errors[key.replace(prefix, '')] = value;
+      const fieldName = key.replace(prefix, '');
+      errors[fieldName] = value;
     }
   }
   return errors;

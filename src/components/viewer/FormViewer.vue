@@ -5,6 +5,9 @@
         <div class="label">
           <span class="label-text font-medium text-gray-900">{{ index + 1 }}. {{ question.question }}</span>
         </div>
+        <div v-if="errors.response" class="mt-1 text-sm text-red-400">
+          {{ errors.response }}
+        </div>
         <div class="label">
           <div v-if="question.description_url"
             class="mt-2 relative h-80 w-full overflow-hidden rounded-lg bg-white sm:aspect-h-1 sm:aspect-w-2 lg:aspect-h-1 lg:aspect-w-1 group-hover:opacity-75 sm:h-64">
@@ -87,10 +90,11 @@
 import { ref } from "vue";
 import ImageElement from "../ImageElement.vue";
 
-const { question, index, modelValue } = defineProps({
+const { question, index, modelValue, errors } = defineProps({
   question: Object,
   index: Number,
   modelValue: [String, Array],
+  errors: Object,
 });
 
 const emits = defineEmits(["update:modelValue"]);

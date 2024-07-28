@@ -97,8 +97,9 @@
                 <span v-if="section.title">: {{ section.title }}</span>
                 <span v-if="section.description">{{ section.description }}</span>
               </label>
-              <div v-for="(question, ind) of section.questions" :key="question.id" class="mt-3">
-                <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
+              <div v-for="(question, questionIndex) of section.questions" :key="question.id" class="mt-3">
+                <FormViewer v-model="responses[question.id]" :question="question" :index="questionIndex"
+                  :errors="getQuestionErrors(questionIndex)" />
               </div>
             </div>
           </div>
@@ -111,13 +112,14 @@
         </form>
       </div>
 
-      <TimerExpiredDialog v-if="!formResponseStore.ended" :hasExpired="hasExpired" @submit="submitForm" @reset="resetTimer" />
+      <TimerExpiredDialog v-if="!formResponseStore.ended" :hasExpired="hasExpired" @submit="submitForm"
+        @reset="resetTimer" />
     </div>
   </main>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import { useFormStore } from "../stores/formStore";
 import { useFormResponseStore } from "../stores/formResponseStore";
@@ -242,7 +244,6 @@ const submitForm = () => {
       response: responses.value[question.id]
     }))
   );
-
   formResponseStore
     .storeFormResponse({
       formId: form.value.id,
@@ -258,6 +259,9 @@ const submitForm = () => {
         clearStorage();
       }
     })
+    .catch(error => {
+      formResponseStore.setError(error);
+    });
 };
 
 const submitAnotherResponse = () => {
@@ -278,5 +282,18 @@ const clearStorage = () => {
 
 const resetTimer = () => {
   hasExpired.value = false;
+};
+
+const getQuestionErrors = (questionIndex) => {
+  if (!formResponseStore.error || !formResponseStore.error.validation) return {};
+  const errors = {};
+  const prefix = `responses.${questionIndex}.`;
+  for (const [key, value] of Object.entries(formResponseStore.error.validation)) {
+    if (key.startsWith(prefix)) {
+      const fieldName = key.replace(prefix, '');
+      errors[fieldName] = value;
+    }
+  }
+  return errors;
 };
 </script>
