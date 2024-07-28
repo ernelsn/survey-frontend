@@ -35,12 +35,6 @@ class FormService {
     }
   }
 
-  async storeFormResponse(formId, responses) {
-    return await this.client.post(`/api/v1/forms/${formId}/responses`, {
-      responses,
-    });
-  }
-
   async updateFormResponseAcceptance(id) {
     return await this.client.patch(`/api/v1/forms/${id}/response-acceptance`, id);
   }

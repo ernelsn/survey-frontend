@@ -97,8 +97,9 @@
                 <span v-if="section.title">: {{ section.title }}</span>
                 <span v-if="section.description">{{ section.description }}</span>
               </label>
-              <div v-for="(question, ind) of section.questions" :key="question.id" class="mt-3">
-                <FormViewer v-model="responses[question.id]" :question="question" :index="ind" />
+              <div v-for="(question, questionIndex) of section.questions" :key="question.id" class="mt-3">
+                <FormViewer v-model="responses[question.id]" :question="question" :index="questionIndex"
+                  :errors="getQuestionErrors(questionIndex)" />
               </div>
             </div>
           </div>
@@ -111,7 +112,8 @@
         </form>
       </div>
 
-      <TimerExpiredDialog :hasExpired="hasExpired" @submit="submitForm" @reset="resetTimer" />
+      <TimerExpiredDialog v-if="!formResponseStore.ended" :hasExpired="hasExpired" @submit="submitForm"
+        @reset="resetTimer" />
     </div>
   </main>
 </template>
@@ -119,36 +121,78 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-
 import { useFormStore } from "../stores/formStore";
 import { useFormResponseStore } from "../stores/formResponseStore";
-
 import FormViewer from "../components/viewer/FormViewer.vue";
 import TimerExpiredDialog from "../components/TimerExpiredDialog.vue";
 import ImageElement from "../components/ImageElement.vue";
 import Forbidden from "../components/errors/Forbidden.vue";
 import NotFound from "../components/errors/NotFound.vue";
 
+// Store and route setup
 const route = useRoute();
 const formStore = useFormStore();
 const formResponseStore = useFormResponseStore();
 
-let timerId = null;
+// Reactive variables
 const responses = ref({});
 const hasExpired = ref(false);
+let timerId = null;
 
+// Computed properties
 const loading = computed(() => formStore.currentForm.loading);
 const form = computed(() => formStore.currentForm.data);
 const results = computed(() => formResponseStore.results);
 const loadResult = computed(() => formResponseStore.loadResults);
 const shouldStartAutomatically = computed(() => !form.value.time_limit);
 
+const timeLeft = computed(() => {
+  if (!formResponseStore.started || formResponseStore.endTime === null) {
+    return { hours: '00', minutes: '00', seconds: '00' };
+  }
+
+  let timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
+  if (timeLeft <= 0) {
+    hasExpired.value = true;
+    return { hours: '00', minutes: '00', seconds: '00' };
+  }
+
+  const hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+  const seconds = String(timeLeft % 60).padStart(2, '0');
+
+  return { hours, minutes, seconds };
+
+});
+
+// Lifecycle hooks
 onMounted(async () => {
   await formStore.getFormBySlug(route.params.slug);
   if (shouldStartAutomatically.value) {
     start();
   }
+
+  checkExpiration();
+  if (timerId) {
+    clearInterval(timerId);
+  }
+  timerId = setInterval(() => {
+    formResponseStore.now = Date.now();
+  }, 1000);
 });
+
+onUnmounted(() => {
+  clearInterval(timerId);
+});
+
+const checkExpiration = () => {
+  const endTimeKey = 'endTime-' + route.params.slug;
+  const endTime = localStorage.getItem(endTimeKey);
+  if (endTime) {
+    const currentTime = Date.now();
+    hasExpired.value = currentTime >= Number(endTime);
+  }
+};
 
 const start = () => {
   formResponseStore.started = true;
@@ -192,42 +236,7 @@ const start = () => {
   }
 };
 
-const timeLeft = computed(() => {
-  if (!formResponseStore.started || formResponseStore.endTime === null) {
-    return { hours: '00', minutes: '00', seconds: '00' };
-  }
-
-  let timeLeft = Math.floor((formResponseStore.endTime - formResponseStore.now) / 1000);
-  if (timeLeft <= 0) {
-    hasExpired.value = true;
-    return { hours: '00', minutes: '00', seconds: '00' };
-  } else {
-    let hours = Math.floor(timeLeft / 3600);
-    let minutes = Math.floor((timeLeft % 3600) / 60);
-    let seconds = timeLeft % 60;
-
-    hours = hours < 10 ? '0' + hours : hours;
-    minutes = minutes < 10 ? '0' + minutes : minutes;
-    seconds = seconds < 10 ? '0' + seconds : seconds;
-
-    return { hours, minutes, seconds };
-  }
-});
-
-function checkExpiration() {
-  const endTimeKey = 'endTime-' + route.params.slug;
-  const endTime = localStorage.getItem(endTimeKey);
-  if (endTime) {
-    const currentTime = Date.now();
-    hasExpired.value = currentTime >= Number(endTime);
-  }
-}
-
-const resetTimer = () => {
-  hasExpired.value = false;
-};
-
-function submitForm() {
+const submitForm = () => {
   const formattedResponses = form.value.sections.flatMap(section =>
     section.questions.map(question => ({
       sectionId: section.id,
@@ -235,7 +244,6 @@ function submitForm() {
       response: responses.value[question.id]
     }))
   );
-
   formResponseStore
     .storeFormResponse({
       formId: form.value.id,
@@ -251,9 +259,19 @@ function submitForm() {
         clearStorage();
       }
     })
+    .catch(error => {
+      formResponseStore.setError(error);
+    });
+};
+
+const submitAnotherResponse = () => {
+  responses.value = {};
+  formResponseStore.ended = false;
+  clearStorage();
+  start();
 }
 
-function clearStorage() {
+const clearStorage = () => {
   const startTimeKey = 'startTime-' + route.params.slug;
   const endTimeKey = 'endTime-' + route.params.slug;
 
@@ -262,24 +280,20 @@ function clearStorage() {
   localStorage.removeItem('response');
 }
 
-function submitAnotherResponse() {
-  responses.value = {};
-  formResponseStore.ended = false;
-  clearStorage();
-  start();
-}
+const resetTimer = () => {
+  hasExpired.value = false;
+};
 
-onMounted(() => {
-  checkExpiration();
-  if (timerId) {
-    clearInterval(timerId);
+const getQuestionErrors = (questionIndex) => {
+  if (!formResponseStore.error || !formResponseStore.error.validation) return {};
+  const errors = {};
+  const prefix = `responses.${questionIndex}.`;
+  for (const [key, value] of Object.entries(formResponseStore.error.validation)) {
+    if (key.startsWith(prefix)) {
+      const fieldName = key.replace(prefix, '');
+      errors[fieldName] = value;
+    }
   }
-  timerId = setInterval(() => {
-    formResponseStore.now = Date.now();
-  }, 1000);
-});
-
-onUnmounted(() => {
-  clearInterval(timerId);
-});
+  return errors;
+};
 </script>

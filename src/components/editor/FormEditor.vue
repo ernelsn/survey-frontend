@@ -143,6 +143,19 @@
         </button>
       </div>
     </div>
+    <div class="col-span-full">
+      <div class="flex items-center lg:ml-4 lg:mt-0 justify-end">
+        <span class="mr-3 text-sm leading-6 font-medium text-gray-900">Required</span>
+        <span class="sm:block">
+          <input type="checkbox" class="peer sr-only opacity-0" :id="'toggle-' + questionIndex"
+            @change="toggleMakeQuestionRequired" :checked="question.is_required" />
+          <label :for="'toggle-' + questionIndex"
+            class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-gray-400 px-0.5 outline-gray-400 transition-colors before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow before:transition-transform before:duration-300 peer-checked:bg-slate-900 peer-checked:before:translate-x-full peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gray-400 peer-checked:peer-focus-visible:outline-slate-700">
+            <span class="sr-only">Enable</span>
+          </label>
+        </span>
+      </div>
+    </div>
   </div>
 
 </template>
@@ -235,6 +248,13 @@ function dataChange() {
   }
   emit("change", data);
 }
+
+const toggleMakeQuestionRequired = () => {
+  emit('change', {
+    ...props.question,
+    is_required: !props.question.is_required
+  }, props.sectionIndex, props.questionIndex);
+};
 
 function deleteQuestion() {
   emit("deleteQuestion", props.question);
