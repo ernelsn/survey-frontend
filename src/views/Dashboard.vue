@@ -103,10 +103,10 @@
 </template>
 
 <script setup>
-import PageComponent from "../components/PageComponent.vue";
-import ImageElement from "../components/ImageElement.vue";
 import { computed, onMounted } from "vue";
 import { useDashboardStore } from '../stores/dashboardStore';
+import PageComponent from "../components/PageComponent.vue";
+import ImageElement from "../components/ImageElement.vue";
 
 const dashboardStore = useDashboardStore();
 
