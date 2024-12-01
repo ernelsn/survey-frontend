@@ -81,27 +81,43 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-
+  
   if (to.matched.some(record => record.meta.requiresAuth)) {
+    // If the route requires authentication
     authStore.fetchUser().then(() => {
       if (authStore.user) {
+        // User is authenticated, proceed to the route or dashboard
         next();
       } else {
+        // Not authenticated, redirect to login
         next({
           path: '/login',
           query: { redirect: to.fullPath }
         });
       }
-    }).catch(error => {
-      next({
-        path: '/login',
-        // query: { redirect: to.fullPath }
-      });
+    }).catch(() => {
+      // Error fetching user, redirect to login
+      next('/login');
+    });
+  } else if (to.name === 'Login' || to.name === 'Register') {
+    // If trying to access login/register
+    authStore.fetchUser().then(() => {
+      if (authStore.user) {
+        // Already authenticated, redirect to dashboard
+        next('/dashboard');
+      } else {
+        // Not authenticated, proceed to login/register
+        next();
+      }
+    }).catch(() => {
+      // Error fetching user, proceed to login/register
+      next();
     });
   } else {
+    // For non-authenticated routes
     next();
   }
-});
+ });
 
 
 export default router;
