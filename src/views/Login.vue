@@ -205,6 +205,6 @@ const providers = ref([
 
 const handleSocialLogin = (provider) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL
-  window.location.href = `${baseUrl}/api/v1/auth/${provider.toLowerCase()}/redirect`
+  window.location.href = `${baseUrl}/auth/${provider.toLowerCase()}/redirect`
 }
 </script>
