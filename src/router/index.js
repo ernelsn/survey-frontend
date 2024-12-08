@@ -97,9 +97,12 @@ router.beforeEach((to, from, next) => {
       }
     }).catch(() => {
       // Error fetching user, redirect to login
-      next('/login');
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      });
     });
-  } else if (to.name === 'Login' || to.name === 'Register') {
+  } else if (to.meta.isGuest) {
     // If trying to access login/register
     authStore.fetchUser().then(() => {
       if (authStore.user) {
