@@ -73,8 +73,7 @@ export const useAuthStore = defineStore('auth', {
           password: user.password
         });
         this.authUser = response.data.user;
-        const redirect = this.router.currentRoute.value.query.redirect || { name: "Dashboard" };
-        this.router.push(redirect);
+        this.router.push({ name: "Dashboard" });
       } catch (error) {
         this.setError(error);
       } finally {
