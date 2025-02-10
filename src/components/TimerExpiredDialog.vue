@@ -3,7 +3,7 @@
         <Dialog class="relative z-10" :open="hasExpired">
             <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 bg-opacity/75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -18,7 +18,7 @@
                             <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                                 <div class="sm:flex sm:items-start">
                                     <div
-                                        class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        class="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                                         <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
                                     </div>
                                     <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
