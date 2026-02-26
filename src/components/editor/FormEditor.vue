@@ -226,11 +226,29 @@ function manageOptions(action, option) {
 }
 
 function typeChange() {
+  const optionTypes = ['multiple choice', 'checkbox', 'dropdown'];
+
   if (hasOptions()) {
-    if (!model.value.data.options || !model.value.data.options.length) {
-      model.value.data.options = [{ uuid: uuidv4(), text: "" }];
+    if (model.value.type === 'linear scale') {
+      model.value.data.options = [{
+        uuid: uuidv4(),
+        from_option: null,
+        from_label: '',
+        to_option: null,
+        to_label: ''
+      }];
+      model.value.correct_option = null;
+    } else if (optionTypes.includes(model.value.type)) {
+      if (!model.value.data.options || !model.value.data.options.length) {
+        model.value.data.options = [{ uuid: uuidv4(), text: "" }];
+      }
+      model.value.correct_option = null;
     }
+  } else {
+    model.value.data.options = [];
+    model.value.correct_option = null;
   }
+
   dataChange();
   emit('scrollToReference', props.sectionIndex, props.questionIndex);
 }
@@ -242,7 +260,8 @@ function dataChange() {
       option.is_correct = option.uuid === model.value.correct_option;
     }
   }
-  const data = model.value;
+
+  const data = JSON.parse(JSON.stringify(model.value));
   if (!hasOptions()) {
     delete data.data.options;
   }
@@ -250,10 +269,8 @@ function dataChange() {
 }
 
 const toggleMakeQuestionRequired = () => {
-  emit('change', {
-    ...props.question,
-    is_required: !props.question.is_required
-  }, props.sectionIndex, props.questionIndex);
+  model.value.is_required = !model.value.is_required;
+  dataChange();
 };
 
 function deleteQuestion() {
