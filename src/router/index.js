@@ -79,45 +79,38 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from) => {
   const authStore = useAuthStore();
-  
+
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    // If the route requires authentication
-    authStore.fetchUser().then(() => {
+    try {
+      await authStore.fetchUser();
       if (authStore.user) {
-        // User is authenticated, proceed to the route or dashboard
-        next();
+        return true;
       } else {
-        // Not authenticated, redirect to login
-        next({
+        return {
           path: '/login',
           query: { redirect: to.fullPath }
-        });
+        };
       }
-    }).catch(() => {
-      // Error fetching user, redirect to login
-      next('/login');
-    });
-  } else if (to.name === 'Login' || to.name === 'Register') {
-    // If trying to access login/register
-    authStore.fetchUser().then(() => {
-      if (authStore.user) {
-        // Already authenticated, redirect to dashboard
-        next('/dashboard');
-      } else {
-        // Not authenticated, proceed to login/register
-        next();
-      }
-    }).catch(() => {
-      // Error fetching user, proceed to login/register
-      next();
-    });
-  } else {
-    // For non-authenticated routes
-    next();
-  }
- });
+    } catch {
+      return '/login';
+    }
 
+  } else if (to.name === 'Login' || to.name === 'Register') {
+    try {
+      await authStore.fetchUser();
+      if (authStore.user) {
+        return '/dashboard';
+      }
+      return true;
+    } catch {
+      return true;
+    }
+
+  } else {
+    return true;
+  }
+});
 
 export default router;
