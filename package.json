@@ -21,7 +21,7 @@
     "notivue": "^2.4.5",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "vue": "^3.5.33",
     "vue-3-fullscreen-image-directive-plugin": "^1.0.4",
     "vue-filepond": "^7.0.4",
