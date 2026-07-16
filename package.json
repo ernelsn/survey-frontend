@@ -25,7 +25,7 @@
     "vue": "^3.5.39",
     "vue-3-fullscreen-image-directive-plugin": "^1.0.4",
     "vue-filepond": "^8.0.0",
-    "vue-router": "^5.1.0"
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
