@@ -34,7 +34,7 @@
     "npm-check-updates": "^22.2.9",
     "postcss": "^8.5.22",
     "tailwindcss": "^4.3.2",
-    "vite": "^8.1.5",
+    "vite": "^8.2.0",
     "vite-plugin-compression2": "^2.5.3"
   }
 }
