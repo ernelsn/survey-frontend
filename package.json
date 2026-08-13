@@ -32,7 +32,7 @@
     "autoprefixer": "^10.5.4",
     "daisyui": "^5.7.14",
     "npm-check-updates": "^23.0.1",
-    "postcss": "^8.5.25",
+    "postcss": "^8.5.26",
     "tailwindcss": "^4.3.2",
     "vite": "^8.2.0",
     "vite-plugin-compression2": "^2.5.3"
