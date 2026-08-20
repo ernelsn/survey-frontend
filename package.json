@@ -30,7 +30,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
     "autoprefixer": "^10.5.4",
-    "daisyui": "^5.7.16",
+    "daisyui": "^5.7.17",
     "npm-check-updates": "^23.0.2",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.2",
