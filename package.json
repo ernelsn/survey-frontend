@@ -28,7 +28,7 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitejs/plugin-vue": "^6.0.9",
     "autoprefixer": "^10.6.0",
     "daisyui": "^5.7.28",
     "npm-check-updates": "^23.1.0",
