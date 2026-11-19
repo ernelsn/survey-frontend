@@ -15,7 +15,7 @@
     "@tailwindcss/postcss": "^4.3.5",
     "@tailwindcss/vite": "^4.3.5",
     "axios": "^1.21.1",
-    "filepond": "^4.32.12",
+    "filepond": "^4.32.14",
     "filepond-plugin-file-validate-type": "^1.2.9",
     "filepond-plugin-image-preview": "^4.6.12",
     "notivue": "^2.4.5",
